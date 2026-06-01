@@ -5,87 +5,38 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>MonthStayz — Check-in Protocol Dashboard</title>
 <style>
-/* ═══════════════════════════════════════════
-   FONTS & RESET
-═══════════════════════════════════════════ */
 @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Inter:wght@400;500;600;700;800&display=swap');
-
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 :root{
-  --orange:    #E8722A;
-  --orange-lt: #FEF0E7;
-  --orange-dk: #C45E1A;
-  --gold:      #F4A024;
-  --teal:      #3BBFB0;
-  --teal-lt:   #E0F7F5;
-  --teal-dk:   #2A9A8C;
-  --brown:     #2C1810;
-  --brown-lt:  #5C3828;
-  --cream:     #FFF8EE;
-  --white:     #FFFFFF;
-  --gray-50:   #F9F7F4;
-  --gray-100:  #F0EDE8;
-  --gray-200:  #E2DDD6;
-  --gray-500:  #9E968C;
-  --gray-700:  #5C5550;
-  --success:   #16A34A;
-  --success-lt:#DCFCE7;
-  --danger:    #DC2626;
-  --danger-lt: #FEE2E2;
-  --shadow-sm: 0 1px 3px rgba(44,24,16,.08);
-  --shadow-md: 0 4px 16px rgba(44,24,16,.12);
-  --shadow-lg: 0 8px 32px rgba(44,24,16,.16);
-  --radius:    14px;
+  --orange:#E8722A;--orange-lt:#FEF0E7;--orange-dk:#C45E1A;
+  --gold:#F4A024;
+  --teal:#3BBFB0;--teal-lt:#E0F7F5;--teal-dk:#2A9A8C;
+  --brown:#2C1810;--brown-lt:#5C3828;
+  --cream:#FFF8EE;--white:#FFFFFF;
+  --gray-50:#F9F7F4;--gray-100:#F0EDE8;--gray-200:#E2DDD6;
+  --gray-500:#9E968C;--gray-700:#5C5550;
+  --success:#16A34A;--success-lt:#DCFCE7;
+  --danger:#DC2626;--danger-lt:#FEE2E2;
+  --shadow-sm:0 1px 3px rgba(44,24,16,.08);
+  --shadow-md:0 4px 16px rgba(44,24,16,.12);
+  --shadow-lg:0 8px 32px rgba(44,24,16,.16);
+  --radius:14px;
 }
-body{
-  font-family:'Inter',sans-serif;
-  background:var(--cream);
-  color:var(--brown);
-  min-height:100vh;
-}
+body{font-family:'Inter',sans-serif;background:var(--cream);color:var(--brown);min-height:100vh;}
 
-/* ═══════════════════════════════════════════
-   HEADER
-═══════════════════════════════════════════ */
-.site-header{
-  background:var(--brown);
-  padding:0 28px;
-  display:flex;align-items:center;justify-content:space-between;
-  position:sticky;top:0;z-index:200;
-  box-shadow:0 2px 12px rgba(0,0,0,.25);
-  height:70px;
-}
+/* HEADER */
+.site-header{background:var(--brown);padding:0 28px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:200;box-shadow:0 2px 12px rgba(0,0,0,.25);height:70px;}
 .header-brand{display:flex;align-items:center;gap:14px;}
-.header-logo{
-  height:50px;width:50px;border-radius:50%;
-  object-fit:cover;border:2px solid var(--gold);
-  background:var(--brown-lt);
-}
-.header-logo-fallback{
-  height:50px;width:50px;border-radius:50%;
-  background:linear-gradient(135deg,var(--orange),var(--gold));
-  display:flex;align-items:center;justify-content:center;
-  font-size:22px;border:2px solid var(--gold);flex-shrink:0;
-}
-.header-title h1{
-  font-family:'Playfair Display',serif;
-  font-size:18px;color:var(--white);line-height:1.2;
-}
+.header-logo{height:50px;width:50px;border-radius:50%;object-fit:cover;border:2px solid var(--gold);background:var(--brown-lt);}
+.header-logo-fallback{height:50px;width:50px;border-radius:50%;background:linear-gradient(135deg,var(--orange),var(--gold));display:flex;align-items:center;justify-content:center;font-size:22px;border:2px solid var(--gold);flex-shrink:0;}
+.header-title h1{font-family:'Playfair Display',serif;font-size:18px;color:var(--white);line-height:1.2;}
 .header-title p{font-size:11px;color:var(--gold);letter-spacing:.5px;text-transform:uppercase;}
-
 .header-right{display:flex;align-items:center;gap:10px;}
 .header-date{font-size:12px;color:rgba(255,255,255,.6);text-align:right;line-height:1.5;}
 .header-date strong{color:var(--gold);display:block;font-size:13px;}
 
-/* ═══════════════════════════════════════════
-   BUTTONS
-═══════════════════════════════════════════ */
-.btn{
-  display:inline-flex;align-items:center;gap:6px;
-  padding:9px 18px;border-radius:9px;
-  font-size:13px;font-weight:600;cursor:pointer;
-  border:none;transition:all .18s;white-space:nowrap;
-}
+/* BUTTONS */
+.btn{display:inline-flex;align-items:center;gap:6px;padding:9px 18px;border-radius:9px;font-size:13px;font-weight:600;cursor:pointer;border:none;transition:all .18s;white-space:nowrap;}
 .btn:disabled{opacity:.55;cursor:not-allowed;}
 .btn-orange{background:var(--orange);color:#fff;}
 .btn-orange:hover:not(:disabled){background:var(--orange-dk);}
@@ -97,120 +48,66 @@ body{
 .btn-ghost{background:rgba(255,255,255,.12);color:#fff;border:1.5px solid rgba(255,255,255,.2);}
 .btn-ghost:hover{background:rgba(255,255,255,.22);}
 
-/* ═══════════════════════════════════════════
-   MAIN CONTENT
-═══════════════════════════════════════════ */
+/* MAIN */
 .main{padding:24px 28px;max-width:1320px;margin:0 auto;}
+.action-bar{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:20px;}
+.action-bar-left{display:flex;gap:10px;flex-wrap:wrap;align-items:center;}
 
-/* ─── Action bar ─── */
-.action-bar{
-  display:flex;align-items:center;justify-content:space-between;
-  flex-wrap:wrap;gap:12px;margin-bottom:20px;
-}
-.action-bar-left{display:flex;gap:10px;flex-wrap:wrap;}
-
-/* ─── Summary ─── */
-.summary-strip{
-  display:grid;grid-template-columns:repeat(4,1fr);
-  gap:14px;margin-bottom:24px;
-}
+/* SUMMARY */
+.summary-strip{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:24px;}
 @media(max-width:700px){.summary-strip{grid-template-columns:repeat(2,1fr);}}
-.stat-card{
-  background:var(--white);border-radius:var(--radius);
-  padding:16px 18px;border:1.5px solid var(--gray-100);
-  box-shadow:var(--shadow-sm);
-}
+.stat-card{background:var(--white);border-radius:var(--radius);padding:16px 18px;border:1.5px solid var(--gray-100);box-shadow:var(--shadow-sm);}
 .stat-card .num{font-size:32px;font-weight:800;line-height:1;}
 .stat-card .lbl{font-size:11px;color:var(--gray-500);margin-top:4px;font-weight:600;text-transform:uppercase;letter-spacing:.4px;}
 .num-orange{color:var(--orange);}
 .num-teal{color:var(--teal-dk);}
 .num-green{color:var(--success);}
 .num-red{color:var(--danger);}
+.date-pill{display:flex;align-items:center;gap:8px;background:var(--white);border:1.5px solid var(--gray-200);border-radius:99px;padding:6px 16px;font-size:13px;font-weight:600;}
 
-/* ─── Date pill ─── */
-.date-pill{
-  display:flex;align-items:center;gap:8px;
-  background:var(--white);border:1.5px solid var(--gray-200);
-  border-radius:99px;padding:6px 16px;font-size:13px;font-weight:600;
-}
-
-/* ─── Cards ─── */
+/* CARDS */
 .cards-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(380px,1fr));gap:18px;}
 @media(max-width:420px){.cards-grid{grid-template-columns:1fr;}}
-
-.trip-card{
-  background:var(--white);border-radius:var(--radius);
-  border:1.5px solid var(--gray-100);
-  box-shadow:var(--shadow-sm);
-  overflow:hidden;transition:box-shadow .2s,transform .2s;
-}
+.trip-card{background:var(--white);border-radius:var(--radius);border:1.5px solid var(--gray-100);box-shadow:var(--shadow-sm);overflow:hidden;transition:box-shadow .2s,transform .2s;}
 .trip-card:hover{box-shadow:var(--shadow-md);transform:translateY(-2px);}
 .trip-card.card-done   {border-left:5px solid var(--success);}
 .trip-card.card-partial{border-left:5px solid var(--gold);}
 .trip-card.card-pending{border-left:5px solid var(--danger);}
 
-/* Card top bar */
-.card-topbar{
-  padding:16px 18px 12px;
-  border-bottom:1px solid var(--gray-100);
-  background:var(--gray-50);
-}
+/* Card topbar */
+.card-topbar{padding:16px 18px 12px;border-bottom:1px solid var(--gray-100);background:var(--gray-50);}
 .card-prop{font-size:20px;font-weight:800;color:var(--brown);line-height:1.2;}
-.card-guest{font-size:13px;color:var(--gray-700);margin-top:4px;display:flex;align-items:center;gap:6px;}
-.card-status-dot{
-  width:9px;height:9px;border-radius:50%;flex-shrink:0;
-  background:var(--danger);
-}
+.card-tripname{font-size:11px;color:var(--gray-500);margin-top:3px;font-family:monospace;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.card-guest{display:flex;align-items:center;gap:6px;margin-top:6px;font-size:14px;font-weight:700;color:var(--brown);}
+.card-status-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0;background:var(--danger);}
 .card-done .card-status-dot{background:var(--success);}
 .card-partial .card-status-dot{background:var(--gold);}
 
 /* Badges */
 .badges{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;}
-.badge{
-  display:inline-flex;align-items:center;gap:4px;
-  padding:3px 10px;border-radius:20px;font-size:11px;font-weight:600;
-}
+.badge{display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:600;}
 .badge-airbnb  {background:#FFF0F0;color:#CC0000;border:1px solid #FFCCCC;}
 .badge-booking {background:#E8F0FF;color:#003580;border:1px solid #BFCFFF;}
 .badge-direct  {background:#E8FFF4;color:#006633;border:1px solid #99DDBB;}
 .badge-agent   {background:#FFF5E0;color:#7A4F00;border:1px solid #FFDDAA;}
 .badge-cash    {background:#E8FFF4;color:#006633;border:1px solid #99DDBB;}
 .badge-teal    {background:var(--teal-lt);color:var(--teal-dk);border:1px solid var(--teal);}
-.badge-orange  {background:var(--orange-lt);color:var(--orange-dk);border:1px solid var(--orange);}
 .badge-gray    {background:var(--gray-100);color:var(--gray-700);border:1px solid var(--gray-200);}
 
 /* Card body */
 .card-body{padding:14px 18px;}
-.card-group{
-  font-size:11px;color:var(--gray-500);
-  font-family:monospace;background:var(--gray-50);
-  padding:5px 8px;border-radius:6px;margin-bottom:14px;
-  word-break:break-all;line-height:1.4;
-}
+.card-group{font-size:11px;color:var(--gray-500);font-family:monospace;background:var(--gray-50);padding:5px 8px;border-radius:6px;margin-bottom:14px;word-break:break-all;line-height:1.4;}
 
 /* Tasks */
 .tasks{display:flex;flex-direction:column;gap:7px;margin-bottom:14px;}
-.task-row{
-  display:flex;align-items:center;gap:10px;
-  padding:10px 12px;border-radius:10px;
-  background:var(--gray-50);border:1.5px solid transparent;
-  cursor:pointer;transition:all .15s;user-select:none;
-}
+.task-row{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:10px;background:var(--gray-50);border:1.5px solid transparent;cursor:pointer;transition:all .15s;user-select:none;}
 .task-row:hover{background:var(--gray-100);border-color:var(--gray-200);}
 .task-row.t-done{background:var(--success-lt);border-color:#BBF7D0;}
-.task-row.t-na  {background:var(--gray-50);cursor:default;opacity:.5;}
 .task-row.t-saving{opacity:.6;pointer-events:none;}
-
-.task-box{
-  width:22px;height:22px;border-radius:7px;
-  border:2px solid var(--gray-200);background:var(--white);
-  display:flex;align-items:center;justify-content:center;
-  flex-shrink:0;transition:all .18s;
-}
+.task-box{width:22px;height:22px;border-radius:7px;border:2px solid var(--gray-200);background:var(--white);display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .18s;}
 .t-done .task-box{background:var(--success);border-color:var(--success);}
 .check-svg{display:none;}
 .t-done .check-svg{display:block;}
-
 .task-label{flex:1;font-size:13.5px;font-weight:500;color:var(--brown);}
 .t-done .task-label{color:var(--gray-500);text-decoration:line-through;}
 .task-time{font-size:11px;color:var(--gray-500);}
@@ -226,86 +123,54 @@ body{
 .pb-zero{background:var(--danger);}
 
 /* Card footer */
-.card-foot{
-  padding:12px 18px;border-top:1px solid var(--gray-100);
-  display:flex;align-items:center;gap:8px;flex-wrap:wrap;
-  background:var(--gray-50);
-}
+.card-foot{padding:12px 18px;border-top:1px solid var(--gray-100);display:flex;align-items:center;gap:8px;flex-wrap:wrap;background:var(--gray-50);}
 .done-tag{font-size:12px;color:var(--success);font-weight:700;}
 
-/* ─── Loading / Empty ─── */
+/* States */
 .state-box{text-align:center;padding:80px 20px;color:var(--gray-500);}
 .state-icon{font-size:52px;margin-bottom:16px;display:block;}
 .state-box h3{font-size:17px;color:var(--gray-700);margin-bottom:6px;}
 .spin{display:inline-block;animation:spin .7s linear infinite;}
 @keyframes spin{to{transform:rotate(360deg);}}
 
-/* ─── Log section ─── */
-.log-toggle{
-  margin-top:32px;text-align:center;
-}
-.log-panel{
-  margin-top:12px;background:var(--white);border-radius:var(--radius);
-  border:1.5px solid var(--gray-200);overflow:hidden;display:none;
-}
+/* Log */
+.log-toggle{margin-top:32px;text-align:center;}
+.log-panel{margin-top:12px;background:var(--white);border-radius:var(--radius);border:1.5px solid var(--gray-200);overflow:hidden;display:none;}
 .log-panel.open{display:block;}
 .log-table{width:100%;border-collapse:collapse;font-size:12px;}
 .log-table th{background:var(--brown);color:#fff;padding:10px 14px;text-align:left;font-weight:600;}
 .log-table td{padding:9px 14px;border-bottom:1px solid var(--gray-100);}
 .log-table tr:last-child td{border:none;}
 .log-table tr:hover td{background:var(--gray-50);}
-.log-ok  {color:var(--success);font-weight:600;}
-.log-fail{color:var(--danger); font-weight:600;}
+.log-ok{color:var(--success);font-weight:600;}
+.log-fail{color:var(--danger);font-weight:600;}
 
-/* ═══════════════════════════════════════════
-   MODALS
-═══════════════════════════════════════════ */
-.modal-bg{
-  display:none;position:fixed;inset:0;
-  background:rgba(44,24,16,.55);z-index:500;
-  align-items:center;justify-content:center;padding:20px;
-}
+/* Modals */
+.modal-bg{display:none;position:fixed;inset:0;background:rgba(44,24,16,.55);z-index:500;align-items:center;justify-content:center;padding:20px;}
 .modal-bg.open{display:flex;}
-.modal{
-  background:var(--white);border-radius:20px;
-  padding:32px 28px;max-width:420px;width:100%;
-  box-shadow:var(--shadow-lg);
-}
+.modal{background:var(--white);border-radius:20px;padding:32px 28px;max-width:420px;width:100%;box-shadow:var(--shadow-lg);}
 .modal h3{font-size:18px;font-weight:800;margin-bottom:6px;color:var(--brown);}
 .modal p{font-size:13px;color:var(--gray-700);margin-bottom:20px;line-height:1.6;}
-.modal-input{
-  width:100%;padding:11px 14px;border:1.5px solid var(--gray-200);
-  border-radius:10px;font-size:15px;color:var(--brown);
-  background:var(--gray-50);margin-bottom:8px;
-  transition:border-color .2s;
-}
+.modal-input{width:100%;padding:11px 14px;border:1.5px solid var(--gray-200);border-radius:10px;font-size:15px;color:var(--brown);background:var(--gray-50);margin-bottom:8px;transition:border-color .2s;}
 .modal-input:focus{outline:none;border-color:var(--orange);}
 .modal-err{color:var(--danger);font-size:13px;margin-bottom:12px;min-height:18px;}
 .modal-foot{display:flex;gap:10px;justify-content:flex-end;margin-top:16px;}
 
-/* ═══════════════════════════════════════════
-   TOAST
-═══════════════════════════════════════════ */
+/* Toast */
 #toasts{position:fixed;bottom:24px;right:24px;display:flex;flex-direction:column;gap:8px;z-index:999;}
-.toast{
-  padding:12px 18px;border-radius:12px;font-size:13.5px;font-weight:600;
-  max-width:340px;box-shadow:var(--shadow-md);
-  animation:toastIn .3s ease;display:flex;align-items:center;gap:8px;
-}
+.toast{padding:12px 18px;border-radius:12px;font-size:13.5px;font-weight:600;max-width:340px;box-shadow:var(--shadow-md);animation:toastIn .3s ease;display:flex;align-items:center;gap:8px;}
 @keyframes toastIn{from{transform:translateY(16px);opacity:0}to{transform:translateY(0);opacity:1}}
-.toast-ok   {background:var(--success);color:#fff;}
-.toast-err  {background:var(--danger); color:#fff;}
-.toast-info {background:var(--brown);  color:#fff;}
-.toast-warn {background:var(--orange); color:#fff;}
+.toast-ok{background:var(--success);color:#fff;}
+.toast-err{background:var(--danger);color:#fff;}
+.toast-info{background:var(--brown);color:#fff;}
+.toast-warn{background:var(--orange);color:#fff;}
 </style>
 </head>
 <body>
 
 <div id="toasts"></div>
 
-<!-- ═══════════════════════════════════════════
-     HEADER
-═══════════════════════════════════════════ -->
+<!-- HEADER -->
 <header class="site-header">
   <div class="header-brand">
     <img src="logo.png" alt="MonthStayz" class="header-logo"
@@ -326,12 +191,8 @@ body{
   </div>
 </header>
 
-<!-- ═══════════════════════════════════════════
-     MAIN
-═══════════════════════════════════════════ -->
+<!-- MAIN -->
 <main class="main">
-
-  <!-- Action bar -->
   <div class="action-bar">
     <div class="action-bar-left">
       <div class="date-pill">📅 <span id="pillDate">Today</span></div>
@@ -340,7 +201,6 @@ body{
     <button class="btn btn-teal btn-sm" onclick="sendBriefing()" id="tgBtn">📨 Send to DPEW</button>
   </div>
 
-  <!-- Summary strip -->
   <div class="summary-strip">
     <div class="stat-card"><div class="num num-orange" id="sTotal">—</div><div class="lbl">Check-ins</div></div>
     <div class="stat-card"><div class="num num-green"  id="sDone">—</div><div class="lbl">Fully Complete</div></div>
@@ -348,7 +208,6 @@ body{
     <div class="stat-card"><div class="num num-red"    id="sPend">—</div><div class="lbl">Tasks Pending</div></div>
   </div>
 
-  <!-- Cards -->
   <div id="cardsGrid">
     <div class="state-box">
       <span class="state-icon spin">⏳</span>
@@ -356,7 +215,6 @@ body{
     </div>
   </div>
 
-  <!-- Log -->
   <div class="log-toggle">
     <button class="btn btn-outline btn-sm" onclick="toggleLog()">📝 Show Message Log</button>
   </div>
@@ -366,12 +224,9 @@ body{
       <tbody id="logBody"></tbody>
     </table>
   </div>
-
 </main>
 
-<!-- ═══════════════════════════════════════════
-     ADMIN UNCHECK MODAL
-═══════════════════════════════════════════ -->
+<!-- ADMIN UNCHECK MODAL -->
 <div class="modal-bg" id="adminModal">
   <div class="modal">
     <h3>🔐 Admin Access Required</h3>
@@ -385,9 +240,7 @@ body{
   </div>
 </div>
 
-<!-- ═══════════════════════════════════════════
-     NAME PROMPT MODAL (first check)
-═══════════════════════════════════════════ -->
+<!-- NAME PROMPT MODAL -->
 <div class="modal-bg" id="nameModal">
   <div class="modal">
     <h3>👋 Your Name</h3>
@@ -401,9 +254,9 @@ body{
 </div>
 
 <script>
-// ═══════════════════════════════════════════
-// CONFIG — keep this file in a PRIVATE GitHub repo
-// ═══════════════════════════════════════════
+// ═══════════════════════════════════════
+// CONFIG — use a PRIVATE GitHub repo
+// ═══════════════════════════════════════
 const AT_TOKEN  = 'patdQPKcRm79wsRxa.e5d6019c4fe6dd24ccf7c64ff4ab00ddb0db8af1dba69d8d31f4e332045ed0fc';
 const AT_BASE   = 'appND9kP55cvkDX7V';
 const TG_TOKEN  = '8697982123:AAGtPx5p8Vx0hn-Bau6z7ueLgFhPlS7wOWM';
@@ -412,24 +265,22 @@ const HARI_CHAT = 2043278046;
 const ADMIN_PWD = '8087';
 const TZ        = 'Asia/Bangkok';
 
-// Table IDs
 const MASTER_TBL = 'tblodAjjJy8FBQAY7';
 const COMP_TBL   = 'tblK36oDEOD1SdKQj';
 
-// Master trips fields
+// Master trips field IDs
 const MT = {
   tripId:   'fld1ziuDjSOUDfmdY',
-  tripName: 'fldOHC5sVVtVXB5Yv',   // Trip Name (formula)
+  tripName: 'fldOHC5sVVtVXB5Yv',
   arrival:  'fldu81bwcyq86aBKz',
   property: 'fldy6ALjM2cSz745M',
   channel:  'fldrmnsj1lsZO9UoJ',
   custName: 'fldB8I68PoBtSDWeS',
   group:    'fldAnwCUUCiV32DCE',
-  contact:  'fldiwTCvtY1iTfWh0',   // Contact Channel (singleSelect)
-  location: 'fld9UXbSA2MheWDQZ',   // Location (from Property) — used to filter Phuket only
+  contact:  'fldiwTCvtY1iTfWh0',
 };
 
-// Completions fields
+// Completions field IDs
 const CT = {
   tripId:     'fldUNpm31vNyoNuGC',
   masterRec:  'fld1RNQz0VasAfCtw',
@@ -451,19 +302,19 @@ const CT = {
   group:      'fldOMNlOpUbTfoAwW',
 };
 
-// ═══════════════════════════════════════════
+// ═══════════════════════════════════════
 // STATE
-// ═══════════════════════════════════════════
-let tripData        = [];
-let pendingUncheck  = null; // { tripIdx, taskKey, fieldId, atFieldId }
-let pendingCheck    = null; // { tripIdx, taskKey, fieldId, atFieldId }
-let selectedDate    = todayBKK();
-let refreshTimer    = null;
-let msgLog          = [];
+// ═══════════════════════════════════════
+let tripData       = [];
+let pendingUncheck = null;
+let pendingCheck   = null;
+let selectedDate   = todayBKK();
+let refreshTimer   = null;
+let msgLog         = [];
 
-// ═══════════════════════════════════════════
+// ═══════════════════════════════════════
 // DATE HELPERS
-// ═══════════════════════════════════════════
+// ═══════════════════════════════════════
 function todayBKK() {
   return new Date().toLocaleDateString('en-CA', { timeZone: TZ });
 }
@@ -478,8 +329,6 @@ function fmtTime(iso) {
 function nowBKK() {
   return new Date().toLocaleTimeString('en-US', { hour:'2-digit', minute:'2-digit', timeZone: TZ });
 }
-
-// Update clock
 function tickClock() {
   const d = new Date();
   document.getElementById('hdrDate').textContent =
@@ -488,9 +337,9 @@ function tickClock() {
     d.toLocaleTimeString('en-US', { hour:'2-digit', minute:'2-digit', timeZone: TZ }) + ' Bangkok';
 }
 
-// ═══════════════════════════════════════════
+// ═══════════════════════════════════════
 // AIRTABLE API
-// ═══════════════════════════════════════════
+// ═══════════════════════════════════════
 async function atGet(tableId, formula, fields) {
   let url = `https://api.airtable.com/v0/${AT_BASE}/${tableId}?`;
   const p = [];
@@ -533,9 +382,9 @@ async function atPatch(tableId, recId, fields) {
   return d;
 }
 
-// ═══════════════════════════════════════════
+// ═══════════════════════════════════════
 // TELEGRAM
-// ═══════════════════════════════════════════
+// ═══════════════════════════════════════
 async function tgSend(chatId, text) {
   try {
     const r = await fetch(`https://api.telegram.org/bot${TG_TOKEN}/sendMessage`, {
@@ -544,7 +393,7 @@ async function tgSend(chatId, text) {
       body: JSON.stringify({ chat_id: chatId, text, parse_mode: 'HTML' })
     });
     const d = await r.json();
-    addLog(chatId === DPEW_CHAT ? 'DPEW Group' : 'Hari Ananth', d.ok, text.substring(0,100));
+    addLog(chatId === DPEW_CHAT ? 'DPEW Group' : 'Hari Ananth', d.ok, text.substring(0, 100));
     return d.ok;
   } catch(e) {
     addLog(chatId === DPEW_CHAT ? 'DPEW Group' : 'Hari Ananth', false, e.message);
@@ -552,9 +401,9 @@ async function tgSend(chatId, text) {
   }
 }
 
-// ═══════════════════════════════════════════
+// ═══════════════════════════════════════
 // BUSINESS RULES
-// ═══════════════════════════════════════════
+// ═══════════════════════════════════════
 function rules(property, channel) {
   const bdc = (channel||'').toLowerCase().includes('booking');
   const snt = (property||'').toUpperCase().includes('SNT');
@@ -569,25 +418,17 @@ function extractName(v) {
   return String(v);
 }
 
-function incomplete(cf, trip) {
-  const list = [];
-  if (!cf[CT.deposit])                                        list.push('💵 Deposit');
-  if (!cf[CT.passport])                                       list.push('🛂 Passport');
-  if (cf[CT.needsElec]   !== false && !cf[CT.electric])       list.push('⚡ Electric Meter');
-  if (cf[CT.needsWater]  !== false && !cf[CT.water])          list.push('💧 Water Meter');
-  return list;
-}
-
-// ═══════════════════════════════════════════
+// ═══════════════════════════════════════
 // LOAD DATA
-// ═══════════════════════════════════════════
+// ═══════════════════════════════════════
 async function loadData() {
   document.getElementById('cardsGrid').innerHTML =
     '<div class="state-box"><span class="state-icon spin">⏳</span><h3>Loading check-ins…</h3></div>';
   setSummary('—','—','—','—');
 
   try {
-    const formula = `AND(IS_SAME({Arrival Date}, DATETIME_PARSE('${selectedDate}'), 'day'), FIND('Phuket', {Location (from Property)}))`;
+    // Filter: today's date AND City = Phuket
+    const formula = `AND(IS_SAME({Arrival Date}, DATETIME_PARSE('${selectedDate}'), 'day'), FIND('Phuket', {City}))`;
     const fields  = Object.values(MT);
 
     const [rawTrips, rawComps] = await Promise.all([
@@ -595,16 +436,15 @@ async function loadData() {
       atGet(COMP_TBL, `IS_SAME({Arrival Date}, DATETIME_PARSE('${selectedDate}'), 'day')`)
     ]);
 
-    // Index completions by master record ID
     const compByMid = {};
     rawComps.forEach(r => {
       const mid = r.fields[CT.masterRec];
       if (mid) compByMid[mid] = r;
     });
 
-    // Build trip data + create missing completion records
     tripData = [];
     const creates = [];
+
     for (const raw of rawTrips) {
       const f        = raw.fields;
       const property = f[MT.property] || '';
@@ -614,15 +454,15 @@ async function loadData() {
       const group    = f[MT.group] || '';
       const tripName = f[MT.tripName] || '';
       const { needsElec, needsWater } = rules(property, channel);
-      const mid      = raw.id;
+      const mid = raw.id;
 
       tripData.push({
         masterRecId: mid,
         tripId: f[MT.tripId] || '',
         tripName, property, channel, contact, custName, group,
         needsElec, needsWater,
-        compId:  compByMid[mid]?.id   || null,
-        cf:      compByMid[mid]?.fields || {},
+        compId: compByMid[mid]?.id   || null,
+        cf:     compByMid[mid]?.fields || {},
       });
 
       if (!compByMid[mid]) {
@@ -630,20 +470,19 @@ async function loadData() {
       }
     }
 
-    // Create missing completion records in parallel
     await Promise.all(creates.map(async ({ tripIdx, mid, property, channel, custName, group, needsElec, needsWater }) => {
       const rec = await atPost(COMP_TBL, {
-        [CT.tripId]:   tripData[tripIdx].tripId,
-        [CT.masterRec]:mid,
-        [CT.property]: property,
-        [CT.custName]: custName,
-        [CT.channel]:  channel,
-        [CT.arrival]:  selectedDate,
-        [CT.needsElec]:needsElec,
+        [CT.tripId]:    tripData[tripIdx].tripId,
+        [CT.masterRec]: mid,
+        [CT.property]:  property,
+        [CT.custName]:  custName,
+        [CT.channel]:   channel,
+        [CT.arrival]:   selectedDate,
+        [CT.needsElec]: needsElec,
         [CT.needsWater]:needsWater,
-        [CT.group]:    group,
-        [CT.deposit]:  false, [CT.passport]: false,
-        [CT.electric]: false, [CT.water]:    false,
+        [CT.group]:     group,
+        [CT.deposit]:   false, [CT.passport]: false,
+        [CT.electric]:  false, [CT.water]:    false,
       });
       if (rec) {
         tripData[tripIdx].compId = rec.id;
@@ -662,13 +501,13 @@ async function loadData() {
   }
 }
 
-// ═══════════════════════════════════════════
+// ═══════════════════════════════════════
 // RENDER
-// ═══════════════════════════════════════════
+// ═══════════════════════════════════════
 function renderCards() {
   if (!tripData.length) {
     document.getElementById('cardsGrid').innerHTML =
-      '<div class="state-box"><span class="state-icon">🌴</span><h3>No check-ins for this date</h3></div>';
+      '<div class="state-box"><span class="state-icon">🌴</span><h3>No Phuket check-ins for this date</h3></div>';
     return;
   }
   document.getElementById('cardsGrid').innerHTML =
@@ -676,19 +515,18 @@ function renderCards() {
 }
 
 function cardHTML(trip, idx) {
-  const tasks = taskList(trip);
-  const total = tasks.length;
-  const done  = tasks.filter(t=>t.done).length;
-  const pct   = total ? Math.round(done/total*100) : 0;
+  const tasks   = taskList(trip);
+  const total   = tasks.length;
+  const done    = tasks.filter(t=>t.done).length;
+  const pct     = total ? Math.round(done/total*100) : 0;
   const allDone = done === total;
   const anyDone = done > 0;
 
-  const cls   = allDone ? 'card-done' : anyDone ? 'card-partial' : 'card-pending';
-  const pbCls = pct===100 ? 'pb-done' : pct>0 ? 'pb-partial' : 'pb-zero';
-  const statusEmoji = allDone ? '✅' : anyDone ? '🔄' : '⏳';
-
-  const chBadge   = channelBadge(trip.channel);
-  const contBadge = trip.contact ? `<span class="badge badge-teal">💬 ${esc(trip.contact)}</span>` : '';
+  const cls     = allDone ? 'card-done' : anyDone ? 'card-partial' : 'card-pending';
+  const pbCls   = pct===100 ? 'pb-done' : pct>0 ? 'pb-partial' : 'pb-zero';
+  const emoji   = allDone ? '✅' : anyDone ? '🔄' : '⏳';
+  const chBadge = channelBadge(trip.channel);
+  const coBadge = trip.contact ? `<span class="badge badge-teal">💬 ${esc(trip.contact)}</span>` : '';
 
   return `
 <div class="trip-card ${cls}" id="card-${idx}">
@@ -696,26 +534,22 @@ function cardHTML(trip, idx) {
     <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:8px">
       <div style="flex:1;min-width:0">
         <div class="card-prop">${esc(trip.property)}</div>
-        <div style="font-size:11px;color:var(--gray-500);margin-top:2px;font-family:monospace;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(trip.tripName)}</div>
-        <div class="card-guest" style="margin-top:6px;font-size:14px;font-weight:700;color:var(--brown)">
+        <div class="card-tripname">${esc(trip.tripName)}</div>
+        <div class="card-guest">
+          <span class="card-status-dot"></span>
           👤 ${esc(trip.custName)}
         </div>
       </div>
-      <span style="font-size:22px;flex-shrink:0;margin-top:2px">${statusEmoji}</span>
+      <span style="font-size:22px;flex-shrink:0;margin-top:2px">${emoji}</span>
     </div>
-    <div class="badges">
-      ${chBadge}
-      ${contBadge}
-    </div>
+    <div class="badges">${chBadge}${coBadge}</div>
   </div>
 
   <div class="card-body">
     <div class="card-group">${esc(trip.group)}</div>
-
     <div class="tasks" id="tasks-${idx}">
       ${tasks.map(t => taskRowHTML(idx, t)).join('')}
     </div>
-
     <div class="prog-wrap">
       <div class="prog-meta">
         <span>${done}/${total} tasks done</span><span>${pct}%</span>
@@ -734,10 +568,8 @@ function cardHTML(trip, idx) {
 }
 
 function taskRowHTML(idx, t) {
-  if (!t.show) return '';
-  const doneClass = t.done ? 't-done' : '';
   return `
-<div class="task-row ${doneClass}" id="task-${idx}-${t.key}"
+<div class="task-row ${t.done?'t-done':''}" id="task-${idx}-${t.key}"
      onclick="onTaskClick(${idx},'${t.key}','${t.fieldId}','${t.atFieldId}',${t.done})">
   <div class="task-box">
     <svg class="check-svg" width="13" height="10" viewBox="0 0 13 10" fill="none">
@@ -757,7 +589,7 @@ function taskList(trip) {
     { key:'passport', label:'🛂 Passport Photo Taken',   fieldId:CT.passport,  atFieldId:CT.passportAt, done:!!cf[CT.passport], timeVal:cf[CT.passportAt], show:true },
     { key:'electric', label:'⚡ Electric Meter Reading', fieldId:CT.electric,  atFieldId:CT.electricAt, done:!!cf[CT.electric], timeVal:cf[CT.electricAt], show:trip.needsElec },
     { key:'water',    label:'💧 Water Meter Reading',    fieldId:CT.water,     atFieldId:CT.waterAt,    done:!!cf[CT.water],    timeVal:cf[CT.waterAt],    show:trip.needsWater },
-  ];
+  ].filter(t => t.show);
 }
 
 function channelBadge(ch) {
@@ -765,7 +597,7 @@ function channelBadge(ch) {
   let cls = 'badge-gray';
   if (c.includes('airbnb'))  cls = 'badge-airbnb';
   else if (c.includes('booking')) cls = 'badge-booking';
-  else if (c.includes('cash direct')||c.includes('cash')) cls = 'badge-cash';
+  else if (c.includes('cash')) cls = 'badge-cash';
   else if (c.includes('direct')) cls = 'badge-direct';
   else if (c.includes('agent')) cls = 'badge-agent';
   return `<span class="badge ${cls}">📦 ${esc(ch)}</span>`;
@@ -775,19 +607,17 @@ function esc(s) {
   return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 }
 
-// ═══════════════════════════════════════════
-// TASK CLICK HANDLER
-// ═══════════════════════════════════════════
+// ═══════════════════════════════════════
+// TASK CLICK
+// ═══════════════════════════════════════
 function onTaskClick(idx, key, fieldId, atFieldId, currentDone) {
   if (currentDone) {
-    // Needs admin to uncheck
     pendingUncheck = { idx, key, fieldId, atFieldId };
     document.getElementById('adminPass').value = '';
     document.getElementById('adminErr').textContent = '';
     document.getElementById('adminModal').classList.add('open');
     setTimeout(() => document.getElementById('adminPass').focus(), 50);
   } else {
-    // Checking — anyone can do it
     const name = localStorage.getItem('ms_name');
     if (!name) {
       pendingCheck = { idx, key, fieldId, atFieldId };
@@ -802,48 +632,37 @@ function onTaskClick(idx, key, fieldId, atFieldId, currentDone) {
 
 async function doCheck(idx, key, fieldId, atFieldId, name) {
   const trip = tripData[idx];
-  if (!trip?.compId) { toast('No completion record found — try refreshing', 'err'); return; }
-
+  if (!trip?.compId) { toast('No completion record — try refreshing', 'err'); return; }
   markSaving(idx, key, true);
   try {
     const now = new Date().toISOString();
     await atPatch(COMP_TBL, trip.compId, {
-      [fieldId]: true,
-      [atFieldId]: now,
-      [CT.doneBy]: name || 'Team',
+      [fieldId]: true, [atFieldId]: now, [CT.doneBy]: name || 'Team',
     });
-    trip.cf[fieldId]  = true;
+    trip.cf[fieldId] = true;
     trip.cf[atFieldId] = now;
     refreshCard(idx);
     updateSummary();
     toast('✅ Marked complete!', 'ok');
   } catch(e) {
     toast('Failed to save: ' + e.message, 'err');
-  } finally {
-    markSaving(idx, key, false);
-  }
+  } finally { markSaving(idx, key, false); }
 }
 
 async function doUncheck(idx, key, fieldId, atFieldId) {
   const trip = tripData[idx];
-  if (!trip?.compId) { toast('No completion record found', 'err'); return; }
-
+  if (!trip?.compId) { toast('No completion record', 'err'); return; }
   markSaving(idx, key, true);
   try {
-    await atPatch(COMP_TBL, trip.compId, {
-      [fieldId]: false,
-      [atFieldId]: null,
-    });
-    trip.cf[fieldId]   = false;
+    await atPatch(COMP_TBL, trip.compId, { [fieldId]: false, [atFieldId]: null });
+    trip.cf[fieldId] = false;
     trip.cf[atFieldId] = null;
     refreshCard(idx);
     updateSummary();
     toast('Unchecked by admin', 'info');
   } catch(e) {
     toast('Failed to uncheck: ' + e.message, 'err');
-  } finally {
-    markSaving(idx, key, false);
-  }
+  } finally { markSaving(idx, key, false); }
 }
 
 function markSaving(idx, key, saving) {
@@ -851,7 +670,6 @@ function markSaving(idx, key, saving) {
   if (el) el.classList.toggle('t-saving', saving);
 }
 
-// ─── Admin modal ───
 function closeAdmin() {
   document.getElementById('adminModal').classList.remove('open');
   pendingUncheck = null;
@@ -871,12 +689,8 @@ function confirmUncheck() {
     doUncheck(idx, key, fieldId, atFieldId);
   }
 }
+document.getElementById('adminPass').addEventListener('keydown', e => { if (e.key==='Enter') confirmUncheck(); });
 
-document.getElementById('adminPass').addEventListener('keydown', e => {
-  if (e.key === 'Enter') confirmUncheck();
-});
-
-// ─── Name modal ───
 function skipName() {
   document.getElementById('nameModal').classList.remove('open');
   if (pendingCheck) {
@@ -896,26 +710,22 @@ function saveName() {
     doCheck(idx, key, fieldId, atFieldId, name);
   }
 }
+document.getElementById('nameInput').addEventListener('keydown', e => { if (e.key==='Enter') saveName(); });
 
-document.getElementById('nameInput').addEventListener('keydown', e => {
-  if (e.key === 'Enter') saveName();
-});
-
-// ═══════════════════════════════════════════
-// REFRESH A SINGLE CARD
-// ═══════════════════════════════════════════
+// ═══════════════════════════════════════
+// REFRESH SINGLE CARD
+// ═══════════════════════════════════════
 function refreshCard(idx) {
   const trip  = tripData[idx];
   const tasks = taskList(trip);
   const total = tasks.length;
   const done  = tasks.filter(t=>t.done).length;
   const pct   = total ? Math.round(done/total*100) : 0;
-  const allDone = done === total, anyDone = done > 0;
+  const allDone = done===total, anyDone = done>0;
 
   const card = document.getElementById(`card-${idx}`);
   if (!card) return;
-
-  card.className = `trip-card ${allDone ? 'card-done' : anyDone ? 'card-partial' : 'card-pending'}`;
+  card.className = `trip-card ${allDone?'card-done':anyDone?'card-partial':'card-pending'}`;
   card.querySelector('.card-status-dot').style.background =
     allDone ? 'var(--success)' : anyDone ? 'var(--gold)' : 'var(--danger)';
   card.querySelector('[style*="font-size:22px"]').textContent =
@@ -924,27 +734,24 @@ function refreshCard(idx) {
   document.getElementById(`tasks-${idx}`).innerHTML = tasks.map(t => taskRowHTML(idx, t)).join('');
 
   const bar = document.getElementById(`prog-${idx}`);
-  if (bar) {
-    bar.style.width = pct + '%';
-    bar.className = `prog-bar ${pct===100?'pb-done':pct>0?'pb-partial':'pb-zero'}`;
-  }
-  card.querySelector('.prog-meta').innerHTML =
-    `<span>${done}/${total} tasks done</span><span>${pct}%</span>`;
+  if (bar) { bar.style.width = pct+'%'; bar.className = `prog-bar ${pct===100?'pb-done':pct>0?'pb-partial':'pb-zero'}`; }
+  card.querySelector('.prog-meta').innerHTML = `<span>${done}/${total} tasks done</span><span>${pct}%</span>`;
 
   document.getElementById(`foot-${idx}`).innerHTML = `
     <button class="btn btn-teal btn-sm" onclick="sendTripUpdate(${idx})">📨 Send Update</button>
-    ${allDone ? '<span class="done-tag">✅ All tasks done!</span>' : ''}
-  `;
+    ${allDone ? '<span class="done-tag">✅ All tasks done!</span>' : ''}`;
 }
 
-// ═══════════════════════════════════════════
+// ═══════════════════════════════════════
 // SUMMARY
-// ═══════════════════════════════════════════
-function setSummary(t,d,p,pen){ ['sTotal','sDone','sProg','sPend'].forEach((id,i)=>document.getElementById(id).textContent=[t,d,p,pen][i]); }
+// ═══════════════════════════════════════
+function setSummary(t,d,p,pen) {
+  ['sTotal','sDone','sProg','sPend'].forEach((id,i) => document.getElementById(id).textContent=[t,d,p,pen][i]);
+}
 function updateSummary() {
   let done=0,prog=0,pend=0;
   tripData.forEach(trip => {
-    const tasks = taskList(trip).filter(t=>t.show);
+    const tasks = taskList(trip);
     const dc = tasks.filter(t=>t.done).length;
     if (dc===tasks.length) done++;
     else if (dc>0) prog++;
@@ -953,9 +760,9 @@ function updateSummary() {
   setSummary(tripData.length, done, prog, pend);
 }
 
-// ═══════════════════════════════════════════
+// ═══════════════════════════════════════
 // DATE PICKER
-// ═══════════════════════════════════════════
+// ═══════════════════════════════════════
 function onDateChange() {
   selectedDate = document.getElementById('datePicker').value || todayBKK();
   document.getElementById('pillDate').textContent =
@@ -963,25 +770,25 @@ function onDateChange() {
   loadData();
 }
 
-// ═══════════════════════════════════════════
+// ═══════════════════════════════════════
 // TELEGRAM SENDS
-// ═══════════════════════════════════════════
+// ═══════════════════════════════════════
 async function sendBriefing() {
   const btn = document.getElementById('briefBtn');
   const btn2 = document.getElementById('tgBtn');
-  [btn, btn2].forEach(b => { if(b) { b.disabled=true; b.textContent='⏳ Sending…'; } });
+  [btn,btn2].forEach(b=>{if(b){b.disabled=true;b.textContent='⏳ Sending…';}});
 
   const date = fmtDate(selectedDate);
   let msg = `🌅 <b>Good morning! Check-in Briefing — ${date}</b>\n\n`;
 
   if (!tripData.length) {
-    msg += '🌴 No check-ins today. Have a great day!';
+    msg += '🌴 No Phuket check-ins today. Have a great day!';
   } else {
-    msg += `📋 <b>${tripData.length} check-in(s) today:</b>\n`;
+    msg += `📋 <b>${tripData.length} check-in(s) today — Phuket:</b>\n`;
     tripData.forEach(t => {
-      const tasks = ['☐ 💵 Deposit', '☐ 🛂 Passport'];
-      if (t.needsElec)   tasks.push('☐ ⚡ Electric Meter');
-      if (t.needsWater)  tasks.push('☐ 💧 Water Meter');
+      const tasks = ['☐ 💵 Deposit','☐ 🛂 Passport'];
+      if (t.needsElec)  tasks.push('☐ ⚡ Electric Meter');
+      if (t.needsWater) tasks.push('☐ 💧 Water Meter');
       msg += `\n🏠 <b>${t.property}</b>  |  👤 ${t.custName}\n`;
       msg += `📦 ${t.channel}`;
       if (t.contact) msg += `  |  💬 ${t.contact}`;
@@ -991,15 +798,15 @@ async function sendBriefing() {
   }
 
   const ok = await tgSend(DPEW_CHAT, msg);
-  toast(ok ? '📨 Morning briefing sent to DPEW!' : '❌ Failed to send — check Telegram settings', ok?'ok':'err');
-  [btn, btn2].forEach(b => { if(b) { b.disabled=false; b.textContent = b===btn ? '📨 Morning Briefing' : '📨 Send to DPEW'; } });
+  toast(ok ? '📨 Morning briefing sent to DPEW!' : '❌ Failed to send', ok?'ok':'err');
+  [btn,btn2].forEach(b=>{if(b){b.disabled=false;b.textContent=b===btn?'📨 Morning Briefing':'📨 Send to DPEW';}});
 }
 
 async function sendTripUpdate(idx) {
   const trip  = tripData[idx];
-  const tasks = taskList(trip).filter(t=>t.show);
+  const tasks = taskList(trip);
   const done  = tasks.filter(t=>t.done).length;
-  const allDone = done === tasks.length;
+  const allDone = done===tasks.length;
 
   let msg = `${allDone?'✅':'⚠️'} <b>${esc(trip.property)} — Check-in Update</b>\n\n`;
   msg += `👤 ${trip.custName}  |  ${trip.channel}`;
@@ -1012,17 +819,15 @@ async function sendTripUpdate(idx) {
   toast(ok ? '📨 Update sent to DPEW!' : '❌ Failed to send', ok?'ok':'err');
 }
 
-// ═══════════════════════════════════════════
-// MESSAGE LOG
-// ═══════════════════════════════════════════
+// ═══════════════════════════════════════
+// LOG
+// ═══════════════════════════════════════
 function addLog(recipient, ok, preview) {
   msgLog.unshift({ time: nowBKK(), recipient, ok, preview });
   if (msgLog.length > 50) msgLog.pop();
-  const body = document.getElementById('logBody');
-  body.innerHTML = msgLog.map(l => `
+  document.getElementById('logBody').innerHTML = msgLog.map(l => `
     <tr>
-      <td>${l.time}</td>
-      <td>${l.recipient}</td>
+      <td>${l.time}</td><td>${l.recipient}</td>
       <td class="${l.ok?'log-ok':'log-fail'}">${l.ok?'Sent ✅':'Failed ❌'}</td>
       <td>${esc(l.preview)}…</td>
     </tr>`).join('');
@@ -1034,27 +839,21 @@ function toggleLog() {
   document.querySelector('.log-toggle button').textContent = open ? '📝 Hide Message Log' : '📝 Show Message Log';
 }
 
-// ═══════════════════════════════════════════
+// ═══════════════════════════════════════
 // TOAST
-// ═══════════════════════════════════════════
+// ═══════════════════════════════════════
 function toast(msg, type='info') {
   const area = document.getElementById('toasts');
-  const el   = document.createElement('div');
+  const el = document.createElement('div');
   el.className = `toast toast-${type==='ok'?'ok':type==='err'?'err':type==='warn'?'warn':'info'}`;
   el.textContent = msg;
   area.appendChild(el);
   setTimeout(() => { el.style.opacity='0'; el.style.transition='opacity .4s'; setTimeout(()=>el.remove(),400); }, 3800);
 }
 
-// ═══════════════════════════════════════════
-// AUTO-REFRESH + INIT
-// ═══════════════════════════════════════════
-function startAutoRefresh() {
-  if (refreshTimer) clearInterval(refreshTimer);
-  refreshTimer = setInterval(loadData, 5 * 60 * 1000); // every 5 min
-}
-
-// Init
+// ═══════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════
 (function init() {
   const today = todayBKK();
   document.getElementById('datePicker').value = today;
@@ -1062,7 +861,7 @@ function startAutoRefresh() {
   tickClock();
   setInterval(tickClock, 30000);
   loadData();
-  startAutoRefresh();
+  refreshTimer = setInterval(loadData, 5 * 60 * 1000);
 })();
 </script>
 </body>
