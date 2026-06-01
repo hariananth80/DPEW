@@ -881,16 +881,27 @@ async function sendBriefing() {
 }
 
 async function sendTripUpdate(idx) {
-  const trip  = tripData[idx];
-  const tasks = taskList(trip);
-  const done  = tasks.filter(t=>t.done).length;
-  const allDone = done===tasks.length;
+  const trip    = tripData[idx];
+  const tasks   = taskList(trip);
+  const resolved = tasks.filter(t => isResolved(t)).length;
+  const allDone  = resolved === tasks.length;
 
   let msg = `${allDone?'✅':'⚠️'} <b>${esc(trip.property)} — Check-in Update</b>\n\n`;
   msg += `👤 ${trip.custName}  |  ${trip.channel}`;
   if (trip.contact) msg += `  |  💬 ${trip.contact}`;
-  msg += `\n\n<b>Protocol Status (${done}/${tasks.length}):</b>\n`;
-  tasks.forEach(t => { msg += `${t.done?'✅':'☐'} ${t.label}${t.done&&t.timeVal?' ['+fmtTime(t.timeVal)+']':''}\n`; });
+  msg += `\n\n<b>Protocol Status (${resolved}/${tasks.length}):</b>\n`;
+  tasks.forEach(t => {
+    if (t.isNA) {
+      // Waived / N/A tasks — show clearly in message
+      if (t.naLabel === 'No Deposit') {
+        msg += `🚫 ${t.label} — <i>No Deposit (Waived)</i>\n`;
+      } else {
+        msg += `〰️ ${t.label} — <i>Not Applicable</i>\n`;
+      }
+    } else {
+      msg += `${t.done?'✅':'☐'} ${t.label}${t.done&&t.timeVal?' ['+fmtTime(t.timeVal)+']':''}\n`;
+    }
+  });
   if (!allDone) msg += `\n⚠️ <b>Pending items need attention!</b>`;
 
   const ok = await tgSend(DPEW_CHAT, msg);
