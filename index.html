@@ -419,12 +419,14 @@ const COMP_TBL   = 'tblK36oDEOD1SdKQj';
 // Master trips fields
 const MT = {
   tripId:   'fld1ziuDjSOUDfmdY',
+  tripName: 'fldOHC5sVVtVXB5Yv',   // Trip Name (formula)
   arrival:  'fldu81bwcyq86aBKz',
   property: 'fldy6ALjM2cSz745M',
   channel:  'fldrmnsj1lsZO9UoJ',
   custName: 'fldB8I68PoBtSDWeS',
   group:    'fldAnwCUUCiV32DCE',
   contact:  'fldiwTCvtY1iTfWh0',   // Contact Channel (singleSelect)
+  location: 'fld9UXbSA2MheWDQZ',   // Location (from Property) — used to filter Phuket only
 };
 
 // Completions fields
@@ -585,7 +587,7 @@ async function loadData() {
   setSummary('—','—','—','—');
 
   try {
-    const formula = `IS_SAME({Arrival Date}, DATETIME_PARSE('${selectedDate}'), 'day')`;
+    const formula = `AND(IS_SAME({Arrival Date}, DATETIME_PARSE('${selectedDate}'), 'day'), FIND('Phuket', {Location (from Property)}))`;
     const fields  = Object.values(MT);
 
     const [rawTrips, rawComps] = await Promise.all([
@@ -610,13 +612,14 @@ async function loadData() {
       const contact  = typeof f[MT.contact] === 'object' ? (f[MT.contact]?.name || '') : (f[MT.contact] || '');
       const custName = extractName(f[MT.custName]);
       const group    = f[MT.group] || '';
+      const tripName = f[MT.tripName] || '';
       const { needsElec, needsWater } = rules(property, channel);
       const mid      = raw.id;
 
       tripData.push({
         masterRecId: mid,
         tripId: f[MT.tripId] || '',
-        property, channel, contact, custName, group,
+        tripName, property, channel, contact, custName, group,
         needsElec, needsWater,
         compId:  compByMid[mid]?.id   || null,
         cf:      compByMid[mid]?.fields || {},
@@ -684,21 +687,21 @@ function cardHTML(trip, idx) {
   const pbCls = pct===100 ? 'pb-done' : pct>0 ? 'pb-partial' : 'pb-zero';
   const statusEmoji = allDone ? '✅' : anyDone ? '🔄' : '⏳';
 
-  const chBadge = channelBadge(trip.channel);
+  const chBadge   = channelBadge(trip.channel);
   const contBadge = trip.contact ? `<span class="badge badge-teal">💬 ${esc(trip.contact)}</span>` : '';
 
   return `
 <div class="trip-card ${cls}" id="card-${idx}">
   <div class="card-topbar">
-    <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px">
-      <div>
+    <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:8px">
+      <div style="flex:1;min-width:0">
         <div class="card-prop">${esc(trip.property)}</div>
-        <div class="card-guest">
-          <span class="card-status-dot"></span>
+        <div style="font-size:11px;color:var(--gray-500);margin-top:2px;font-family:monospace;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(trip.tripName)}</div>
+        <div class="card-guest" style="margin-top:6px;font-size:14px;font-weight:700;color:var(--brown)">
           👤 ${esc(trip.custName)}
         </div>
       </div>
-      <span style="font-size:22px;flex-shrink:0">${statusEmoji}</span>
+      <span style="font-size:22px;flex-shrink:0;margin-top:2px">${statusEmoji}</span>
     </div>
     <div class="badges">
       ${chBadge}
