@@ -440,8 +440,8 @@ async function loadData() {
   setSummary('—','—','—','—');
 
   try {
-    // Filter: today's date AND City = Phuket
-    const formula = `AND(IS_SAME({Arrival Date}, DATETIME_PARSE('${selectedDate}'), 'day'), FIND('Phuket', {City}))`;
+    // Filter: today's date AND City = Phuket AND Inquiry status = Paid and confirmed
+    const formula = `AND(IS_SAME({Arrival Date}, DATETIME_PARSE('${selectedDate}'), 'day'), FIND('Phuket', {City}), {Inquiry status} = 'Paid and confirmed')`;
     const fields  = Object.values(MT);
 
     const [rawTrips, rawComps] = await Promise.all([
