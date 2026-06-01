@@ -112,6 +112,16 @@ body{font-family:'Inter',sans-serif;background:var(--cream);color:var(--brown);m
 .t-done .task-label{color:var(--gray-500);text-decoration:line-through;}
 .task-time{font-size:11px;color:var(--gray-500);}
 .lock-icon{font-size:13px;opacity:.5;}
+.task-row.t-na-marked{background:#F3F4F6;border-color:#D1D5DB;}
+.task-row.t-na-marked .task-label{color:var(--gray-500);text-decoration:line-through;}
+.na-btn{
+  margin-left:auto;padding:3px 9px;border-radius:6px;font-size:11px;font-weight:700;
+  cursor:pointer;border:1.5px solid var(--gray-200);background:var(--white);color:var(--gray-500);
+  transition:all .15s;white-space:nowrap;flex-shrink:0;
+}
+.na-btn:hover{background:var(--gray-100);border-color:var(--gray-500);}
+.na-btn.na-active{background:#F3F4F6;border-color:#9CA3AF;color:#374151;font-style:italic;}
+.na-label{font-size:11px;color:var(--gray-500);font-style:italic;margin-left:4px;}
 
 /* Progress */
 .prog-wrap{margin-bottom:14px;}
@@ -298,6 +308,8 @@ const CT = {
   waterAt:    'fldcydcrIvDvYKgep',
   needsElec:  'fld04aLyfyfscTcnX',
   needsWater: 'fldG7hnWqLBaDZHjp',
+  electricNA: 'fldkgDZ3a0EKDWoAp',
+  waterNA:    'fldhijaiQ5NTUs4UU',
   doneBy:     'fldIzoPJxrHYpy8dP',
   group:      'fldOMNlOpUbTfoAwW',
 };
@@ -341,11 +353,12 @@ function tickClock() {
 // AIRTABLE API
 // ═══════════════════════════════════════
 async function atGet(tableId, formula, fields) {
-  let url = `https://api.airtable.com/v0/${AT_BASE}/${tableId}?`;
+  // returnFieldsByFieldId=true makes the API key fields by ID (e.g. fldXXX) instead of name
+  let url = `https://api.airtable.com/v0/${AT_BASE}/${tableId}?returnFieldsByFieldId=true`;
   const p = [];
   if (formula) p.push('filterByFormula=' + encodeURIComponent(formula));
   if (fields)  fields.forEach(f => p.push('fields%5B%5D=' + encodeURIComponent(f)));
-  url += p.join('&');
+  if (p.length) url += '&' + p.join('&');
 
   let records = [], offset = null;
   do {
@@ -481,8 +494,9 @@ async function loadData() {
         [CT.needsElec]: needsElec,
         [CT.needsWater]:needsWater,
         [CT.group]:     group,
-        [CT.deposit]:   false, [CT.passport]: false,
-        [CT.electric]:  false, [CT.water]:    false,
+        [CT.deposit]:    false, [CT.passport]:  false,
+        [CT.electric]:   false, [CT.water]:     false,
+        [CT.electricNA]: false, [CT.waterNA]:   false,
       });
       if (rec) {
         tripData[tripIdx].compId = rec.id;
@@ -517,7 +531,7 @@ function renderCards() {
 function cardHTML(trip, idx) {
   const tasks   = taskList(trip);
   const total   = tasks.length;
-  const done    = tasks.filter(t=>t.done).length;
+  const done    = tasks.filter(t=>isResolved(t)).length;
   const pct     = total ? Math.round(done/total*100) : 0;
   const allDone = done === total;
   const anyDone = done > 0;
@@ -575,29 +589,40 @@ function cardHTML(trip, idx) {
 }
 
 function taskRowHTML(idx, t) {
+  const rowCls = t.isNA ? 't-na-marked' : t.done ? 't-done' : '';
+  const naBtn  = t.hasNA
+    ? `<button class="na-btn ${t.isNA?'na-active':''}"
+         onclick="event.stopPropagation();onNAClick(${idx},'${t.key}','${t.naFieldId}',${t.isNA})"
+         title="Mark as Not Applicable">${t.isNA ? '✕ N/A (undo)' : 'N/A'}</button>`
+    : '';
   return `
-<div class="task-row ${t.done?'t-done':''}" id="task-${idx}-${t.key}"
-     onclick="onTaskClick(${idx},'${t.key}','${t.fieldId}','${t.atFieldId}',${t.done})">
+<div class="task-row ${rowCls}" id="task-${idx}-${t.key}"
+     onclick="onTaskClick(${idx},'${t.key}','${t.fieldId}','${t.atFieldId}',${t.done},${t.isNA})">
   <div class="task-box">
     <svg class="check-svg" width="13" height="10" viewBox="0 0 13 10" fill="none">
       <path d="M1.5 5L5 8.5L11.5 1.5" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
     </svg>
   </div>
   <span class="task-label">${t.label}</span>
-  ${t.done && t.timeVal ? `<span class="task-time">${fmtTime(t.timeVal)}</span>` : ''}
-  ${t.done ? '<span class="lock-icon">🔒</span>' : ''}
+  ${t.isNA ? '<span class="na-label">Not applicable</span>' : ''}
+  ${t.done && t.timeVal && !t.isNA ? `<span class="task-time">${fmtTime(t.timeVal)}</span>` : ''}
+  ${t.done && !t.isNA ? '<span class="lock-icon">🔒</span>' : ''}
+  ${naBtn}
 </div>`;
 }
 
 function taskList(trip) {
   const cf = trip.cf;
   return [
-    { key:'deposit',  label:'💵 Deposit Collected',      fieldId:CT.deposit,   atFieldId:CT.depositAt,  done:!!cf[CT.deposit],  timeVal:cf[CT.depositAt],  show:true },
-    { key:'passport', label:'🛂 Passport Photo Taken',   fieldId:CT.passport,  atFieldId:CT.passportAt, done:!!cf[CT.passport], timeVal:cf[CT.passportAt], show:true },
-    { key:'electric', label:'⚡ Electric Meter Reading', fieldId:CT.electric,  atFieldId:CT.electricAt, done:!!cf[CT.electric], timeVal:cf[CT.electricAt], show:trip.needsElec },
-    { key:'water',    label:'💧 Water Meter Reading',    fieldId:CT.water,     atFieldId:CT.waterAt,    done:!!cf[CT.water],    timeVal:cf[CT.waterAt],    show:trip.needsWater },
+    { key:'deposit',  label:'💵 Deposit Collected',      fieldId:CT.deposit,   atFieldId:CT.depositAt,  done:!!cf[CT.deposit],  timeVal:cf[CT.depositAt],  show:true,             hasNA:false, isNA:false,                   naFieldId:null },
+    { key:'passport', label:'🛂 Passport Photo Taken',   fieldId:CT.passport,  atFieldId:CT.passportAt, done:!!cf[CT.passport], timeVal:cf[CT.passportAt], show:true,             hasNA:false, isNA:false,                   naFieldId:null },
+    { key:'electric', label:'⚡ Electric Meter Reading', fieldId:CT.electric,  atFieldId:CT.electricAt, done:!!cf[CT.electric], timeVal:cf[CT.electricAt], show:trip.needsElec,   hasNA:true,  isNA:!!cf[CT.electricNA],     naFieldId:CT.electricNA },
+    { key:'water',    label:'💧 Water Meter Reading',    fieldId:CT.water,     atFieldId:CT.waterAt,    done:!!cf[CT.water],    timeVal:cf[CT.waterAt],    show:trip.needsWater,  hasNA:true,  isNA:!!cf[CT.waterNA],        naFieldId:CT.waterNA },
   ].filter(t => t.show);
 }
+
+// A task counts as "resolved" if done OR marked N/A
+function isResolved(t) { return t.done || t.isNA; }
 
 function channelBadge(ch) {
   const c = (ch||'').toLowerCase();
@@ -617,7 +642,8 @@ function esc(s) {
 // ═══════════════════════════════════════
 // TASK CLICK
 // ═══════════════════════════════════════
-function onTaskClick(idx, key, fieldId, atFieldId, currentDone) {
+function onTaskClick(idx, key, fieldId, atFieldId, currentDone, currentNA) {
+  if (currentNA) return; // N/A tasks can only be changed via the N/A button
   if (currentDone) {
     pendingUncheck = { idx, key, fieldId, atFieldId };
     document.getElementById('adminPass').value = '';
@@ -691,12 +717,53 @@ function confirmUncheck() {
   }
   document.getElementById('adminModal').classList.remove('open');
   if (pendingUncheck) {
-    const { idx, key, fieldId, atFieldId } = pendingUncheck;
+    const { idx, key, fieldId, atFieldId, isNAUndo } = pendingUncheck;
     pendingUncheck = null;
-    doUncheck(idx, key, fieldId, atFieldId);
+    if (isNAUndo) {
+      // Undo N/A: set the NA field back to false
+      const trip = tripData[idx];
+      atPatch(COMP_TBL, trip.compId, { [fieldId]: false }).then(() => {
+        trip.cf[fieldId] = false;
+        refreshCard(idx);
+        updateSummary();
+        toast('N/A removed', 'info');
+      }).catch(e => toast('Failed: ' + e.message, 'err'));
+    } else {
+      doUncheck(idx, key, fieldId, atFieldId);
+    }
   }
 }
 document.getElementById('adminPass').addEventListener('keydown', e => { if (e.key==='Enter') confirmUncheck(); });
+
+// ═══════════════════════════════════════
+// N/A TOGGLE
+// ═══════════════════════════════════════
+async function onNAClick(idx, key, naFieldId, currentNA) {
+  const trip = tripData[idx];
+  if (!trip?.compId) { toast('No completion record — try refreshing', 'err'); return; }
+
+  if (currentNA) {
+    // Undo N/A requires admin (same protection as unchecking a done task)
+    pendingUncheck = { idx, key, fieldId: naFieldId, atFieldId: null, isNAUndo: true };
+    document.getElementById('adminPass').value = '';
+    document.getElementById('adminErr').textContent = '';
+    document.getElementById('adminModal').classList.add('open');
+    setTimeout(() => document.getElementById('adminPass').focus(), 50);
+    return;
+  }
+
+  // Mark as N/A — anyone can do this
+  markSaving(idx, key, true);
+  try {
+    await atPatch(COMP_TBL, trip.compId, { [naFieldId]: true });
+    trip.cf[naFieldId] = true;
+    refreshCard(idx);
+    updateSummary();
+    toast('Marked as Not Applicable', 'info');
+  } catch(e) {
+    toast('Failed: ' + e.message, 'err');
+  } finally { markSaving(idx, key, false); }
+}
 
 function skipName() {
   document.getElementById('nameModal').classList.remove('open');
@@ -726,7 +793,7 @@ function refreshCard(idx) {
   const trip  = tripData[idx];
   const tasks = taskList(trip);
   const total = tasks.length;
-  const done  = tasks.filter(t=>t.done).length;
+  const done  = tasks.filter(t=>isResolved(t)).length;
   const pct   = total ? Math.round(done/total*100) : 0;
   const allDone = done===total, anyDone = done>0;
 
@@ -759,10 +826,10 @@ function updateSummary() {
   let done=0,prog=0,pend=0;
   tripData.forEach(trip => {
     const tasks = taskList(trip);
-    const dc = tasks.filter(t=>t.done).length;
+    const dc = tasks.filter(t=>isResolved(t)).length;
     if (dc===tasks.length) done++;
     else if (dc>0) prog++;
-    pend += tasks.filter(t=>!t.done).length;
+    pend += tasks.filter(t=>!isResolved(t)).length;
   });
   setSummary(tripData.length, done, prog, pend);
 }
