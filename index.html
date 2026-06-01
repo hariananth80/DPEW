@@ -277,7 +277,7 @@ const MT = {
   channel:  'fldrmnsj1lsZO9UoJ',
   custName: 'fldB8I68PoBtSDWeS',
   group:    'fldAnwCUUCiV32DCE',
-  contact:  'fldiwTCvtY1iTfWh0',
+  contact:  'fldw9vgDW7PsIudZo',   // Contact Channel (from CRM contact) — multipleLookupValues
 };
 
 // Completions field IDs
@@ -449,7 +449,7 @@ async function loadData() {
       const f        = raw.fields;
       const property = f[MT.property] || '';
       const channel  = typeof f[MT.channel] === 'object' ? (f[MT.channel]?.name || '') : (f[MT.channel] || '');
-      const contact  = typeof f[MT.contact] === 'object' ? (f[MT.contact]?.name || '') : (f[MT.contact] || '');
+      const contact  = extractName(f[MT.contact]);  // Contact Channel from CRM contact (multipleLookupValues)
       const custName = extractName(f[MT.custName]);
       const group    = f[MT.group] || '';
       const tripName = f[MT.tripName] || '';
@@ -531,22 +531,29 @@ function cardHTML(trip, idx) {
   return `
 <div class="trip-card ${cls}" id="card-${idx}">
   <div class="card-topbar">
-    <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:8px">
-      <div style="flex:1;min-width:0">
-        <div class="card-prop">${esc(trip.property)}</div>
-        <div class="card-tripname">${esc(trip.tripName)}</div>
-        <div class="card-guest">
-          <span class="card-status-dot"></span>
-          👤 ${esc(trip.custName)}
-        </div>
-      </div>
-      <span style="font-size:22px;flex-shrink:0;margin-top:2px">${emoji}</span>
+
+    <!-- Row 1: Property + status -->
+    <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:6px">
+      <div class="card-prop">${esc(trip.property)}</div>
+      <span style="font-size:22px;flex-shrink:0">${emoji}</span>
     </div>
+
+    <!-- Row 2: Customer group naming -->
+    <div style="font-size:12px;font-weight:700;color:var(--orange-dk);background:var(--orange-lt);border-radius:6px;padding:4px 8px;margin-bottom:8px;word-break:break-all;line-height:1.5;">
+      📋 ${esc(trip.group)}
+    </div>
+
+    <!-- Row 3: Customer name -->
+    <div style="display:flex;align-items:center;gap:7px;margin-bottom:8px;">
+      <span class="card-status-dot"></span>
+      <span style="font-size:15px;font-weight:700;color:var(--brown);">👤 ${esc(trip.custName)}</span>
+    </div>
+
+    <!-- Row 4: Badges -->
     <div class="badges">${chBadge}${coBadge}</div>
   </div>
 
   <div class="card-body">
-    <div class="card-group">${esc(trip.group)}</div>
     <div class="tasks" id="tasks-${idx}">
       ${tasks.map(t => taskRowHTML(idx, t)).join('')}
     </div>
