@@ -308,6 +308,7 @@ const CT = {
   waterAt:    'fldcydcrIvDvYKgep',
   needsElec:  'fld04aLyfyfscTcnX',
   needsWater: 'fldG7hnWqLBaDZHjp',
+  depositWaived:'fldtIg9hkHzaM06Sn',
   electricNA: 'fldkgDZ3a0EKDWoAp',
   waterNA:    'fldhijaiQ5NTUs4UU',
   doneBy:     'fldIzoPJxrHYpy8dP',
@@ -494,9 +495,10 @@ async function loadData() {
         [CT.needsElec]: needsElec,
         [CT.needsWater]:needsWater,
         [CT.group]:     group,
-        [CT.deposit]:    false, [CT.passport]:  false,
-        [CT.electric]:   false, [CT.water]:     false,
-        [CT.electricNA]: false, [CT.waterNA]:   false,
+        [CT.deposit]:       false, [CT.passport]:  false,
+        [CT.electric]:      false, [CT.water]:     false,
+        [CT.depositWaived]: false,
+        [CT.electricNA]:    false, [CT.waterNA]:   false,
       });
       if (rec) {
         tripData[tripIdx].compId = rec.id;
@@ -590,11 +592,13 @@ function cardHTML(trip, idx) {
 
 function taskRowHTML(idx, t) {
   const rowCls = t.isNA ? 't-na-marked' : t.done ? 't-done' : '';
-  const naBtn  = t.hasNA
+  const btnLabel  = t.isNA ? `✕ ${t.naLabel} (undo)` : t.naLabel;
+  const naBtn     = t.hasNA
     ? `<button class="na-btn ${t.isNA?'na-active':''}"
          onclick="event.stopPropagation();onNAClick(${idx},'${t.key}','${t.naFieldId}',${t.isNA})"
-         title="Mark as Not Applicable">${t.isNA ? '✕ N/A (undo)' : 'N/A'}</button>`
+         title="${t.naLabel}">${btnLabel}</button>`
     : '';
+  const naText    = t.isNA ? (t.naLabel === 'No Deposit' ? 'Waived' : 'Not applicable') : '';
   return `
 <div class="task-row ${rowCls}" id="task-${idx}-${t.key}"
      onclick="onTaskClick(${idx},'${t.key}','${t.fieldId}','${t.atFieldId}',${t.done},${t.isNA})">
@@ -604,7 +608,7 @@ function taskRowHTML(idx, t) {
     </svg>
   </div>
   <span class="task-label">${t.label}</span>
-  ${t.isNA ? '<span class="na-label">Not applicable</span>' : ''}
+  ${naText ? `<span class="na-label">${naText}</span>` : ''}
   ${t.done && t.timeVal && !t.isNA ? `<span class="task-time">${fmtTime(t.timeVal)}</span>` : ''}
   ${t.done && !t.isNA ? '<span class="lock-icon">🔒</span>' : ''}
   ${naBtn}
@@ -614,10 +618,10 @@ function taskRowHTML(idx, t) {
 function taskList(trip) {
   const cf = trip.cf;
   return [
-    { key:'deposit',  label:'💵 Deposit Collected',      fieldId:CT.deposit,   atFieldId:CT.depositAt,  done:!!cf[CT.deposit],  timeVal:cf[CT.depositAt],  show:true,             hasNA:false, isNA:false,                   naFieldId:null },
-    { key:'passport', label:'🛂 Passport Photo Taken',   fieldId:CT.passport,  atFieldId:CT.passportAt, done:!!cf[CT.passport], timeVal:cf[CT.passportAt], show:true,             hasNA:false, isNA:false,                   naFieldId:null },
-    { key:'electric', label:'⚡ Electric Meter Reading', fieldId:CT.electric,  atFieldId:CT.electricAt, done:!!cf[CT.electric], timeVal:cf[CT.electricAt], show:trip.needsElec,   hasNA:true,  isNA:!!cf[CT.electricNA],     naFieldId:CT.electricNA },
-    { key:'water',    label:'💧 Water Meter Reading',    fieldId:CT.water,     atFieldId:CT.waterAt,    done:!!cf[CT.water],    timeVal:cf[CT.waterAt],    show:trip.needsWater,  hasNA:true,  isNA:!!cf[CT.waterNA],        naFieldId:CT.waterNA },
+    { key:'deposit',  label:'💵 Deposit Collected',      fieldId:CT.deposit,   atFieldId:CT.depositAt,  done:!!cf[CT.deposit],  timeVal:cf[CT.depositAt],  show:true,             hasNA:true,  isNA:!!cf[CT.depositWaived],  naFieldId:CT.depositWaived, naLabel:'No Deposit' },
+    { key:'passport', label:'🛂 Passport Photo Taken',   fieldId:CT.passport,  atFieldId:CT.passportAt, done:!!cf[CT.passport], timeVal:cf[CT.passportAt], show:true,             hasNA:false, isNA:false,                   naFieldId:null,             naLabel:'' },
+    { key:'electric', label:'⚡ Electric Meter Reading', fieldId:CT.electric,  atFieldId:CT.electricAt, done:!!cf[CT.electric], timeVal:cf[CT.electricAt], show:trip.needsElec,   hasNA:true,  isNA:!!cf[CT.electricNA],     naFieldId:CT.electricNA,    naLabel:'N/A' },
+    { key:'water',    label:'💧 Water Meter Reading',    fieldId:CT.water,     atFieldId:CT.waterAt,    done:!!cf[CT.water],    timeVal:cf[CT.waterAt],    show:trip.needsWater,  hasNA:true,  isNA:!!cf[CT.waterNA],        naFieldId:CT.waterNA,       naLabel:'N/A' },
   ].filter(t => t.show);
 }
 
