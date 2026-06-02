@@ -441,8 +441,13 @@ async function loadData() {
   setSummary('—','—','—','—');
 
   try {
-    // Filter: today's date AND City = Phuket AND Inquiry status = Paid and confirmed
-    const formula = `AND(IS_SAME({Arrival Date}, DATETIME_PARSE('${selectedDate}'), 'day'), FIND('Phuket', {City}), {Inquiry status} = 'Paid and confirmed')`;
+    const isToday = selectedDate === todayBKK();
+
+    // Today: only show confirmed arrivals
+    // Past dates: show checked-in or completed trips
+    const formula = isToday
+      ? `AND(IS_SAME({Arrival Date}, DATETIME_PARSE('${selectedDate}'), 'day'), FIND('Phuket', {City}), {Inquiry status} = 'Paid and confirmed')`
+      : `AND(IS_SAME({Arrival Date}, DATETIME_PARSE('${selectedDate}'), 'day'), FIND('Phuket', {City}), OR({Inquiry status} = 'Checked in', {Inquiry status} = 'Trip completed'))`;
     const fields  = Object.values(MT);
 
     const [rawTrips, rawComps] = await Promise.all([
@@ -455,8 +460,6 @@ async function loadData() {
       const mid = r.fields[CT.masterRec];
       if (mid) compByMid[mid] = r;
     });
-
-    const isToday = selectedDate === todayBKK();
     tripData = [];
     const creates = [];
 
