@@ -456,6 +456,7 @@ async function loadData() {
       if (mid) compByMid[mid] = r;
     });
 
+    const isToday = selectedDate === todayBKK();
     tripData = [];
     const creates = [];
 
@@ -475,36 +476,42 @@ async function loadData() {
         tripId: f[MT.tripId] || '',
         tripName, property, channel, contact, custName, group,
         needsElec, needsWater,
-        compId: compByMid[mid]?.id   || null,
+        compId: compByMid[mid]?.id    || null,
         cf:     compByMid[mid]?.fields || {},
+        noRecord: !compByMid[mid],  // flag: no completion record found
       });
 
-      if (!compByMid[mid]) {
+      // Only create missing completion records for TODAY — never for past dates
+      if (!compByMid[mid] && isToday) {
         creates.push({ tripIdx: tripData.length - 1, mid, property, channel, custName, group, needsElec, needsWater });
       }
     }
 
-    await Promise.all(creates.map(async ({ tripIdx, mid, property, channel, custName, group, needsElec, needsWater }) => {
-      const rec = await atPost(COMP_TBL, {
-        [CT.tripId]:    tripData[tripIdx].tripId,
-        [CT.masterRec]: mid,
-        [CT.property]:  property,
-        [CT.custName]:  custName,
-        [CT.channel]:   channel,
-        [CT.arrival]:   selectedDate,
-        [CT.needsElec]: needsElec,
-        [CT.needsWater]:needsWater,
-        [CT.group]:     group,
-        [CT.deposit]:       false, [CT.passport]:  false,
-        [CT.electric]:      false, [CT.water]:     false,
-        [CT.depositWaived]: false,
-        [CT.electricNA]:    false, [CT.waterNA]:   false,
-      });
-      if (rec) {
-        tripData[tripIdx].compId = rec.id;
-        tripData[tripIdx].cf     = rec.fields;
-      }
-    }));
+    // Create missing records only for today's check-ins
+    if (creates.length) {
+      await Promise.all(creates.map(async ({ tripIdx, mid, property, channel, custName, group, needsElec, needsWater }) => {
+        const rec = await atPost(COMP_TBL, {
+          [CT.tripId]:    tripData[tripIdx].tripId,
+          [CT.masterRec]: mid,
+          [CT.property]:  property,
+          [CT.custName]:  custName,
+          [CT.channel]:   channel,
+          [CT.arrival]:   selectedDate,
+          [CT.needsElec]: needsElec,
+          [CT.needsWater]:needsWater,
+          [CT.group]:     group,
+          [CT.deposit]:       false, [CT.passport]:  false,
+          [CT.electric]:      false, [CT.water]:     false,
+          [CT.depositWaived]: false,
+          [CT.electricNA]:    false, [CT.waterNA]:   false,
+        });
+        if (rec) {
+          tripData[tripIdx].compId   = rec.id;
+          tripData[tripIdx].cf       = rec.fields;
+          tripData[tripIdx].noRecord = false;
+        }
+      }));
+    }
 
     renderCards();
     updateSummary();
@@ -570,6 +577,7 @@ function cardHTML(trip, idx) {
   </div>
 
   <div class="card-body">
+    ${trip.noRecord ? `<div style="font-size:12px;color:var(--gray-500);background:var(--gray-100);border-radius:8px;padding:8px 12px;margin-bottom:12px;text-align:center;">📭 No check-in record was tracked for this date</div>` : ''}
     <div class="tasks" id="tasks-${idx}">
       ${tasks.map(t => taskRowHTML(idx, t)).join('')}
     </div>
