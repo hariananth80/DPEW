@@ -443,16 +443,20 @@ async function loadData() {
   try {
     const isToday = selectedDate === todayBKK();
 
-    // Today: only show confirmed arrivals
-    // Past dates: show checked-in or completed trips
+    // Build date filter using YEAR/MONTH/DAY — most reliable across timezones
+    const [yr, mo, dy] = selectedDate.split('-').map(Number);
+    const dateFilter = `AND(YEAR({Arrival Date})=${yr}, MONTH({Arrival Date})=${mo}, DAY({Arrival Date})=${dy})`;
+
+    // Today: confirmed arrivals only
+    // Past dates: any Phuket trip on that date (status already changed)
     const formula = isToday
-      ? `AND(IS_SAME({Arrival Date}, DATETIME_PARSE('${selectedDate}'), 'day'), FIND('Phuket', {City}), {Inquiry status} = 'Paid and confirmed')`
-      : `AND(IS_SAME({Arrival Date}, DATETIME_PARSE('${selectedDate}'), 'day'), FIND('Phuket', {City}), OR({Inquiry status} = 'Checked-in', {Inquiry status} = 'Trip completed'))`;
+      ? `AND(${dateFilter}, FIND('Phuket', {City}), {Inquiry status}='Paid and confirmed')`
+      : `AND(${dateFilter}, FIND('Phuket', {City}))`;
     const fields  = Object.values(MT);
 
     const [rawTrips, rawComps] = await Promise.all([
       atGet(MASTER_TBL, formula, fields),
-      atGet(COMP_TBL, `IS_SAME({Arrival Date}, DATETIME_PARSE('${selectedDate}'), 'day')`)
+      atGet(COMP_TBL, `AND(YEAR({Arrival Date})=${yr}, MONTH({Arrival Date})=${mo}, DAY({Arrival Date})=${dy})`)
     ]);
 
     const compByMid = {};
