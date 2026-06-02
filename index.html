@@ -218,13 +218,7 @@ body{font-family:'Inter',sans-serif;background:var(--cream);color:var(--brown);m
     <div class="stat-card"><div class="num num-red"    id="sPend">—</div><div class="lbl">Tasks Pending</div></div>
   </div>
 
-  <!-- Debug panel — remove once historical view is confirmed working -->
-  <div id="debugPanel" style="background:#1E1B4B;color:#C7D2FE;border-radius:10px;padding:12px 16px;margin-bottom:16px;font-size:12px;font-family:monospace;display:none;">
-    <strong style="color:#FCD34D">🔍 Debug Info</strong><br/>
-    <span id="debugText"></span>
-  </div>
-
-  <div id="cardsGrid">
+<div id="cardsGrid">
     <div class="state-box">
       <span class="state-icon spin">⏳</span>
       <h3>Loading today's check-ins…</h3>
@@ -457,21 +451,13 @@ async function loadData() {
     // Past dates: any Phuket trip on that date (status already changed)
     const formula = isToday
       ? `AND(${dateFilter}, FIND('Phuket', {City}), {Inquiry status}='Paid and confirmed')`
-      : `AND(${dateFilter}, FIND('Phuket', {City}))`;
+      : `AND(${dateFilter}, FIND('Phuket', {City}), OR({Inquiry status}='Checked-In', {Inquiry status}='Trip completed'))`;
     const fields  = Object.values(MT);
-
-    // Show debug panel
-    const dbg = document.getElementById('debugPanel');
-    const dbgTxt = document.getElementById('debugText');
-    dbg.style.display = 'block';
-    dbgTxt.innerHTML = `Selected date: <b>${selectedDate}</b> | isToday: <b>${isToday}</b> | todayBKK: <b>${todayBKK()}</b><br/>Formula: ${formula.replace(/</g,'&lt;')}`;
 
     const [rawTrips, rawComps] = await Promise.all([
       atGet(MASTER_TBL, formula, fields),
       atGet(COMP_TBL, `AND(YEAR({Arrival Date})=${yr}, MONTH({Arrival Date})=${mo}, DAY({Arrival Date})=${dy})`)
     ]);
-
-    dbgTxt.innerHTML += `<br/>Master trips returned: <b>${rawTrips.length}</b> | Completions returned: <b>${rawComps.length}</b>`;
 
     const compByMid = {};
     rawComps.forEach(r => {
