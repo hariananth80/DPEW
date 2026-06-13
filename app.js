@@ -5,10 +5,10 @@
 // ── Brand / team config ──────────────────────────────────────
 const MEMBERS = [
   { id: 'YOU', name: 'You (Admin)',   initials: 'YA', color: '#E8631A', bg: '#FDF0E8', role: 'Admin'    },
-  { id: 'TM1', name: 'Arjun K.',     initials: 'AK', color: '#3AAFA9', bg: '#E4F7F6', role: 'Manager'  },
-  { id: 'TM2', name: 'Sneha P.',     initials: 'SP', color: '#2C1810', bg: '#E8D5C8', role: 'Designer' },
-  { id: 'TM3', name: 'Rohit V.',     initials: 'RV', color: '#8B4513', bg: '#FDF0E8', role: 'Developer'},
-  { id: 'TM4', name: 'Meera N.',     initials: 'MN', color: '#2D6A2D', bg: '#E8F5E8', role: 'Marketing'},
+  { id: 'TM1', name: 'Ryan',     initials: 'RY', color: '#3AAFA9', bg: '#E4F7F6', role: 'CEO'  },
+  { id: 'TM2', name: 'Suprith',     initials: 'SP', color: '#2C1810', bg: '#E8D5C8', role: 'Marketing' },
+  { id: 'TM3', name: 'Srinath',     initials: 'SR', color: '#8B4513', bg: '#FDF0E8', role: 'IT'},
+  { id: 'TM4', name: 'Nira',     initials: 'NI', color: '#2D6A2D', bg: '#E8F5E8', role: 'Customer Service'},
   { id: 'TM5', name: 'Priya S.',     initials: 'PS', color: '#6B21A8', bg: '#F3E8FF', role: 'Sales'    },
 ];
 
@@ -30,7 +30,7 @@ const PRIORITY_META = {
 // ── App state ────────────────────────────────────────────────
 const STATE = {
   currentUser: null,
-  currentProject: 'Villa Operations',
+  currentProject: 'Operations',
   currentView: 'board',
   openTaskId: null,
   replyingTo: null,
@@ -43,16 +43,16 @@ const STATE = {
 
 // ── Initial project/task data ────────────────────────────────
 const PROJECTS = [
-  { id: 'p1', name: 'Villa Operations',   color: '#E8631A', icon: 'ti-building' },
+  { id: 'p1', name: 'Operations',   color: '#E8631A', icon: 'ti-building' },
   { id: 'p2', name: 'Guest Experience',   color: '#3AAFA9', icon: 'ti-heart'    },
-  { id: 'p3', name: 'Marketing Thailand', color: '#F5A623', icon: 'ti-speakerphone' },
+  { id: 'p3', name: 'Marketing', color: '#F5A623', icon: 'ti-speakerphone' },
   { id: 'p4', name: 'Finance & Billing',  color: '#4CAF50', icon: 'ti-cash'     },
 ];
 
 let tasks = [
-  // ── Villa Operations ─────────────────────────────────────
+  // ── Operations ─────────────────────────────────────
   {
-    id: 1, project: 'Villa Operations', title: 'Prepare villa checklist for June arrivals',
+    id: 1, project: 'Operations', title: 'Prepare villa checklist for June arrivals',
     status: 'Done', priority: 'High', assignee: 'TM1', due: 'Jun 5',
     tags: ['housekeeping', 'ops'], watchers: ['TM1', 'TM2', 'YOU'],
     description: 'Complete the pre-arrival checklist for all villas with June bookings. Ensure towels, toiletries, and welcome kits are in place.',
@@ -74,7 +74,7 @@ let tasks = [
     ],
   },
   {
-    id: 2, project: 'Villa Operations', title: 'Arrange airport transfers for 8 guests — Jun 10',
+    id: 2, project: 'Operations', title: 'Arrange airport transfers for 8 guests — Jun 10',
     status: 'In Progress', priority: 'Urgent', assignee: 'TM3', due: 'Jun 10',
     tags: ['transfers', 'logistics'], watchers: ['TM3', 'TM1', 'YOU'],
     description: 'Coordinate pickup for 8 guests arriving from Bangkok on Jun 10. Two separate flights — coordinate 2 vans.',
@@ -94,7 +94,7 @@ let tasks = [
     ],
   },
   {
-    id: 3, project: 'Villa Operations', title: 'AC maintenance for Villa 3 and Villa 7',
+    id: 3, project: 'Operations', title: 'AC maintenance for Villa 3 and Villa 7',
     status: 'To Do', priority: 'High', assignee: 'TM3', due: 'Jun 15',
     tags: ['maintenance'], watchers: ['TM3', 'YOU'],
     description: 'Scheduled maintenance for AC units in Villa 3 (master bedroom) and Villa 7 (all units). Contact Koh Samui AC Services.',
@@ -103,7 +103,7 @@ let tasks = [
     activity: [{ text: 'You created this task', time: 'Jun 13' }],
   },
   {
-    id: 4, project: 'Villa Operations', title: 'Stock pool supplies for high season',
+    id: 4, project: 'Operations', title: 'Stock pool supplies for high season',
     status: 'In Review', priority: 'Medium', assignee: 'TM2', due: 'Jun 18',
     tags: ['supplies', 'pool'], watchers: ['TM2', 'TM1'],
     description: 'Order pool floats, sunscreen dispensers, and umbrella stands before high season begins Jul 1.',
@@ -167,9 +167,9 @@ let tasks = [
     ],
   },
 
-  // ── Marketing Thailand ───────────────────────────────────
+  // ── Marketing ───────────────────────────────────
   {
-    id: 8, project: 'Marketing Thailand', title: 'Instagram content calendar — July',
+    id: 8, project: 'Marketing', title: 'Instagram content calendar — July',
     status: 'In Progress', priority: 'High', assignee: 'TM4', due: 'Jun 22',
     tags: ['social', 'content'], watchers: ['TM4', 'TM5', 'YOU'],
     description: 'Plan and schedule 30 posts for July Instagram. Mix of villa shots, guest testimonials, Thailand lifestyle content.',
@@ -182,7 +182,7 @@ let tasks = [
     activity: [{ text: 'Meera N. created this task', time: 'Jun 10' }],
   },
   {
-    id: 9, project: 'Marketing Thailand', title: 'Launch referral program for returning guests',
+    id: 9, project: 'Marketing', title: 'Launch referral program for returning guests',
     status: 'To Do', priority: 'High', assignee: 'TM5', due: 'Jun 28',
     tags: ['referral', 'growth'], watchers: ['TM5', 'TM1', 'YOU'],
     description: '10% discount for guests who refer a friend. Set up landing page, email flow, and tracking.',
