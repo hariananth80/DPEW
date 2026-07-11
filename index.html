@@ -450,7 +450,7 @@ async function loadData() {
     // Today: confirmed arrivals only
     // Past dates: any Phuket trip on that date (status already changed)
     const formula = isToday
-      ? `AND(${dateFilter}, FIND('Phuket', {City}), {Inquiry status}='Paid and confirmed')`
+      ? `AND(${dateFilter}, FIND('Phuket', {City}), OR({Inquiry status}='Paid and confirmed', {Inquiry status}='Checked-In'))`
       : `AND(${dateFilter}, FIND('Phuket', {City}), OR({Inquiry status}='Checked-In', {Inquiry status}='Trip completed'))`;
     const fields  = Object.values(MT);
 
