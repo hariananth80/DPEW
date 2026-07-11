@@ -1,400 +1,972 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Month Stayz Thailand — Project Hub</title>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>MonthStayz — Check-in Protocol Dashboard</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Inter:wght@400;500;600;700;800&display=swap');
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --orange:#E8722A;--orange-lt:#FEF0E7;--orange-dk:#C45E1A;
+  --gold:#F4A024;
+  --teal:#3BBFB0;--teal-lt:#E0F7F5;--teal-dk:#2A9A8C;
+  --brown:#2C1810;--brown-lt:#5C3828;
+  --cream:#FFF8EE;--white:#FFFFFF;
+  --gray-50:#F9F7F4;--gray-100:#F0EDE8;--gray-200:#E2DDD6;
+  --gray-500:#9E968C;--gray-700:#5C5550;
+  --success:#16A34A;--success-lt:#DCFCE7;
+  --danger:#DC2626;--danger-lt:#FEE2E2;
+  --shadow-sm:0 1px 3px rgba(44,24,16,.08);
+  --shadow-md:0 4px 16px rgba(44,24,16,.12);
+  --shadow-lg:0 8px 32px rgba(44,24,16,.16);
+  --radius:14px;
+}
+body{font-family:'Inter',sans-serif;background:var(--cream);color:var(--brown);min-height:100vh;}
 
-  <!-- Tabler icons -->
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.19.0/dist/tabler-icons.min.css">
-  <!-- Google Fonts -->
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+/* HEADER */
+.site-header{background:var(--brown);padding:0 28px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:200;box-shadow:0 2px 12px rgba(0,0,0,.25);height:70px;}
+.header-brand{display:flex;align-items:center;gap:14px;}
+.header-logo{height:50px;width:50px;border-radius:50%;object-fit:cover;border:2px solid var(--gold);background:var(--brown-lt);}
+.header-logo-fallback{height:50px;width:50px;border-radius:50%;background:linear-gradient(135deg,var(--orange),var(--gold));display:flex;align-items:center;justify-content:center;font-size:22px;border:2px solid var(--gold);flex-shrink:0;}
+.header-title h1{font-family:'Playfair Display',serif;font-size:18px;color:var(--white);line-height:1.2;}
+.header-title p{font-size:11px;color:var(--gold);letter-spacing:.5px;text-transform:uppercase;}
+.header-right{display:flex;align-items:center;gap:10px;}
+.header-date{font-size:12px;color:rgba(255,255,255,.6);text-align:right;line-height:1.5;}
+.header-date strong{color:var(--gold);display:block;font-size:13px;}
 
-  <link rel="stylesheet" href="styles.css">
+/* BUTTONS */
+.btn{display:inline-flex;align-items:center;gap:6px;padding:9px 18px;border-radius:9px;font-size:13px;font-weight:600;cursor:pointer;border:none;transition:all .18s;white-space:nowrap;}
+.btn:disabled{opacity:.55;cursor:not-allowed;}
+.btn-orange{background:var(--orange);color:#fff;}
+.btn-orange:hover:not(:disabled){background:var(--orange-dk);}
+.btn-teal{background:var(--teal);color:#fff;}
+.btn-teal:hover:not(:disabled){background:var(--teal-dk);}
+.btn-outline{background:transparent;border:1.5px solid var(--gray-200);color:var(--gray-700);}
+.btn-outline:hover{background:var(--gray-100);}
+.btn-sm{padding:6px 12px;font-size:12px;}
+.btn-ghost{background:rgba(255,255,255,.12);color:#fff;border:1.5px solid rgba(255,255,255,.2);}
+.btn-ghost:hover{background:rgba(255,255,255,.22);}
 
-  <style>
-    /* Inline logo for sidebar — base64 embedded below via JS */
-    #sidebar-logo-img { object-fit: cover; }
-  </style>
+/* MAIN */
+.main{padding:24px 28px;max-width:1320px;margin:0 auto;}
+.action-bar{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:20px;}
+.action-bar-left{display:flex;gap:10px;flex-wrap:wrap;align-items:center;}
+
+/* SUMMARY */
+.summary-strip{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:24px;}
+@media(max-width:700px){.summary-strip{grid-template-columns:repeat(2,1fr);}}
+.stat-card{background:var(--white);border-radius:var(--radius);padding:16px 18px;border:1.5px solid var(--gray-100);box-shadow:var(--shadow-sm);}
+.stat-card .num{font-size:32px;font-weight:800;line-height:1;}
+.stat-card .lbl{font-size:11px;color:var(--gray-500);margin-top:4px;font-weight:600;text-transform:uppercase;letter-spacing:.4px;}
+.num-orange{color:var(--orange);}
+.num-teal{color:var(--teal-dk);}
+.num-green{color:var(--success);}
+.num-red{color:var(--danger);}
+.date-pill{display:flex;align-items:center;gap:8px;background:var(--white);border:1.5px solid var(--gray-200);border-radius:99px;padding:6px 16px;font-size:13px;font-weight:600;}
+
+/* CARDS */
+.cards-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(380px,1fr));gap:18px;}
+@media(max-width:420px){.cards-grid{grid-template-columns:1fr;}}
+.trip-card{background:var(--white);border-radius:var(--radius);border:1.5px solid var(--gray-100);box-shadow:var(--shadow-sm);overflow:hidden;transition:box-shadow .2s,transform .2s;}
+.trip-card:hover{box-shadow:var(--shadow-md);transform:translateY(-2px);}
+.trip-card.card-done   {border-left:5px solid var(--success);}
+.trip-card.card-partial{border-left:5px solid var(--gold);}
+.trip-card.card-pending{border-left:5px solid var(--danger);}
+
+/* Card topbar */
+.card-topbar{padding:16px 18px 12px;border-bottom:1px solid var(--gray-100);background:var(--gray-50);}
+.card-prop{font-size:20px;font-weight:800;color:var(--brown);line-height:1.2;}
+.card-tripname{font-size:11px;color:var(--gray-500);margin-top:3px;font-family:monospace;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.card-guest{display:flex;align-items:center;gap:6px;margin-top:6px;font-size:14px;font-weight:700;color:var(--brown);}
+.card-status-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0;background:var(--danger);}
+.card-done .card-status-dot{background:var(--success);}
+.card-partial .card-status-dot{background:var(--gold);}
+
+/* Badges */
+.badges{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;}
+.badge{display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:600;}
+.badge-airbnb  {background:#FFF0F0;color:#CC0000;border:1px solid #FFCCCC;}
+.badge-booking {background:#E8F0FF;color:#003580;border:1px solid #BFCFFF;}
+.badge-direct  {background:#E8FFF4;color:#006633;border:1px solid #99DDBB;}
+.badge-agent   {background:#FFF5E0;color:#7A4F00;border:1px solid #FFDDAA;}
+.badge-cash    {background:#E8FFF4;color:#006633;border:1px solid #99DDBB;}
+.badge-teal    {background:var(--teal-lt);color:var(--teal-dk);border:1px solid var(--teal);}
+.badge-gray    {background:var(--gray-100);color:var(--gray-700);border:1px solid var(--gray-200);}
+
+/* Card body */
+.card-body{padding:14px 18px;}
+.card-group{font-size:11px;color:var(--gray-500);font-family:monospace;background:var(--gray-50);padding:5px 8px;border-radius:6px;margin-bottom:14px;word-break:break-all;line-height:1.4;}
+
+/* Tasks */
+.tasks{display:flex;flex-direction:column;gap:7px;margin-bottom:14px;}
+.task-row{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:10px;background:var(--gray-50);border:1.5px solid transparent;cursor:pointer;transition:all .15s;user-select:none;}
+.task-row:hover{background:var(--gray-100);border-color:var(--gray-200);}
+.task-row.t-done{background:var(--success-lt);border-color:#BBF7D0;}
+.task-row.t-saving{opacity:.6;pointer-events:none;}
+.task-box{width:22px;height:22px;border-radius:7px;border:2px solid var(--gray-200);background:var(--white);display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .18s;}
+.t-done .task-box{background:var(--success);border-color:var(--success);}
+.check-svg{display:none;}
+.t-done .check-svg{display:block;}
+.task-label{flex:1;font-size:13.5px;font-weight:500;color:var(--brown);}
+.t-done .task-label{color:var(--gray-500);text-decoration:line-through;}
+.task-time{font-size:11px;color:var(--gray-500);}
+.lock-icon{font-size:13px;opacity:.5;}
+.task-row.t-na-marked{background:#F3F4F6;border-color:#D1D5DB;}
+.task-row.t-na-marked .task-label{color:var(--gray-500);text-decoration:line-through;}
+.na-btn{
+  margin-left:auto;padding:3px 9px;border-radius:6px;font-size:11px;font-weight:700;
+  cursor:pointer;border:1.5px solid var(--gray-200);background:var(--white);color:var(--gray-500);
+  transition:all .15s;white-space:nowrap;flex-shrink:0;
+}
+.na-btn:hover{background:var(--gray-100);border-color:var(--gray-500);}
+.na-btn.na-active{background:#F3F4F6;border-color:#9CA3AF;color:#374151;font-style:italic;}
+.na-label{font-size:11px;color:var(--gray-500);font-style:italic;margin-left:4px;}
+
+/* Progress */
+.prog-wrap{margin-bottom:14px;}
+.prog-meta{display:flex;justify-content:space-between;font-size:12px;color:var(--gray-500);font-weight:600;margin-bottom:5px;}
+.prog-track{height:6px;background:var(--gray-100);border-radius:99px;overflow:hidden;}
+.prog-bar{height:100%;border-radius:99px;transition:width .4s ease;}
+.pb-done{background:var(--success);}
+.pb-partial{background:var(--gold);}
+.pb-zero{background:var(--danger);}
+
+/* Card footer */
+.card-foot{padding:12px 18px;border-top:1px solid var(--gray-100);display:flex;align-items:center;gap:8px;flex-wrap:wrap;background:var(--gray-50);}
+.done-tag{font-size:12px;color:var(--success);font-weight:700;}
+
+/* States */
+.state-box{text-align:center;padding:80px 20px;color:var(--gray-500);}
+.state-icon{font-size:52px;margin-bottom:16px;display:block;}
+.state-box h3{font-size:17px;color:var(--gray-700);margin-bottom:6px;}
+.spin{display:inline-block;animation:spin .7s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg);}}
+
+/* Log */
+.log-toggle{margin-top:32px;text-align:center;}
+.log-panel{margin-top:12px;background:var(--white);border-radius:var(--radius);border:1.5px solid var(--gray-200);overflow:hidden;display:none;}
+.log-panel.open{display:block;}
+.log-table{width:100%;border-collapse:collapse;font-size:12px;}
+.log-table th{background:var(--brown);color:#fff;padding:10px 14px;text-align:left;font-weight:600;}
+.log-table td{padding:9px 14px;border-bottom:1px solid var(--gray-100);}
+.log-table tr:last-child td{border:none;}
+.log-table tr:hover td{background:var(--gray-50);}
+.log-ok{color:var(--success);font-weight:600;}
+.log-fail{color:var(--danger);font-weight:600;}
+
+/* Modals */
+.modal-bg{display:none;position:fixed;inset:0;background:rgba(44,24,16,.55);z-index:500;align-items:center;justify-content:center;padding:20px;}
+.modal-bg.open{display:flex;}
+.modal{background:var(--white);border-radius:20px;padding:32px 28px;max-width:420px;width:100%;box-shadow:var(--shadow-lg);}
+.modal h3{font-size:18px;font-weight:800;margin-bottom:6px;color:var(--brown);}
+.modal p{font-size:13px;color:var(--gray-700);margin-bottom:20px;line-height:1.6;}
+.modal-input{width:100%;padding:11px 14px;border:1.5px solid var(--gray-200);border-radius:10px;font-size:15px;color:var(--brown);background:var(--gray-50);margin-bottom:8px;transition:border-color .2s;}
+.modal-input:focus{outline:none;border-color:var(--orange);}
+.modal-err{color:var(--danger);font-size:13px;margin-bottom:12px;min-height:18px;}
+.modal-foot{display:flex;gap:10px;justify-content:flex-end;margin-top:16px;}
+
+/* Toast */
+#toasts{position:fixed;bottom:24px;right:24px;display:flex;flex-direction:column;gap:8px;z-index:999;}
+.toast{padding:12px 18px;border-radius:12px;font-size:13.5px;font-weight:600;max-width:340px;box-shadow:var(--shadow-md);animation:toastIn .3s ease;display:flex;align-items:center;gap:8px;}
+@keyframes toastIn{from{transform:translateY(16px);opacity:0}to{transform:translateY(0);opacity:1}}
+.toast-ok{background:var(--success);color:#fff;}
+.toast-err{background:var(--danger);color:#fff;}
+.toast-info{background:var(--brown);color:#fff;}
+.toast-warn{background:var(--orange);color:#fff;}
+</style>
 </head>
 <body>
 
-<!-- ── Login screen ─────────────────────────────────────────── -->
-<div id="login-screen">
-  <div class="login-card">
-    <img id="login-logo" class="login-logo" src="" alt="Month Stayz Thailand logo">
-    <div class="login-brand">Month Stayz Thailand</div>
-    <div class="login-sub">by Gold Star Empire</div>
-    <h2>Sign in to Project Hub</h2>
-    <p>Choose your profile to continue</p>
+<div id="toasts"></div>
 
-    <div class="team-members-grid" id="member-grid">
-      <!-- populated by JS -->
+<!-- HEADER -->
+<header class="site-header">
+  <div class="header-brand">
+    <img src="logo.png" alt="MonthStayz" class="header-logo"
+         onerror="this.style.display='none';this.nextElementSibling.style.display='flex'" />
+    <div class="header-logo-fallback" style="display:none">🏝️</div>
+    <div class="header-title">
+      <h1>MonthStayz Thailand</h1>
+      <p>Check-in Protocol Dashboard</p>
     </div>
-
-    <div class="login-divider"><span>or enter your name</span></div>
-
-    <div class="form-group">
-      <label>Your name</label>
-      <input type="text" id="login-name" placeholder="Enter your name">
+  </div>
+  <div class="header-right">
+    <div class="header-date">
+      <strong id="hdrDate">—</strong>
+      <span id="hdrTime">Bangkok Time</span>
     </div>
-    <button class="btn-login" onclick="doLogin()">Enter workspace</button>
+    <button class="btn btn-ghost btn-sm" onclick="loadData()">🔄 Refresh</button>
+    <button class="btn btn-ghost btn-sm" id="briefBtn" onclick="sendBriefing()">📨 Morning Briefing</button>
+  </div>
+</header>
+
+<!-- MAIN -->
+<main class="main">
+  <div class="action-bar">
+    <div class="action-bar-left">
+      <div class="date-pill">📅 <span id="pillDate">Today</span></div>
+      <input type="date" id="datePicker" style="padding:7px 12px;border:1.5px solid var(--gray-200);border-radius:9px;font-size:13px;font-family:inherit;cursor:pointer;background:var(--white);" onchange="onDateChange()" />
+    </div>
+    <button class="btn btn-teal btn-sm" onclick="sendBriefing()" id="tgBtn">📨 Send to DPEW</button>
+  </div>
+
+  <div class="summary-strip">
+    <div class="stat-card"><div class="num num-orange" id="sTotal">—</div><div class="lbl">Check-ins</div></div>
+    <div class="stat-card"><div class="num num-green"  id="sDone">—</div><div class="lbl">Fully Complete</div></div>
+    <div class="stat-card"><div class="num num-teal"   id="sProg">—</div><div class="lbl">In Progress</div></div>
+    <div class="stat-card"><div class="num num-red"    id="sPend">—</div><div class="lbl">Tasks Pending</div></div>
+  </div>
+
+<div id="cardsGrid">
+    <div class="state-box">
+      <span class="state-icon spin">⏳</span>
+      <h3>Loading today's check-ins…</h3>
+    </div>
+  </div>
+
+  <div class="log-toggle">
+    <button class="btn btn-outline btn-sm" onclick="toggleLog()">📝 Show Message Log</button>
+  </div>
+  <div class="log-panel" id="logPanel">
+    <table class="log-table">
+      <thead><tr><th>Time (Bangkok)</th><th>Recipient</th><th>Status</th><th>Preview</th></tr></thead>
+      <tbody id="logBody"></tbody>
+    </table>
+  </div>
+</main>
+
+<!-- ADMIN UNCHECK MODAL -->
+<div class="modal-bg" id="adminModal">
+  <div class="modal">
+    <h3>🔐 Admin Access Required</h3>
+    <p>This task has been marked complete. Only an admin can uncheck it.<br>Enter the admin password to proceed.</p>
+    <input type="password" class="modal-input" id="adminPass" placeholder="Enter admin password" />
+    <div class="modal-err" id="adminErr"></div>
+    <div class="modal-foot">
+      <button class="btn btn-outline" onclick="closeAdmin()">Cancel</button>
+      <button class="btn btn-orange" onclick="confirmUncheck()">Confirm Uncheck</button>
+    </div>
   </div>
 </div>
 
-<!-- ── Main app (hidden until login) ────────────────────────── -->
-<div id="app" style="display:none">
-
-  <!-- Sidebar -->
-  <div class="sidebar" id="sidebar">
-    <div class="sidebar-logo">
-      <img id="sidebar-logo-img" src="" alt="logo">
-      <div class="sidebar-logo-text">
-        <div class="brand">Month Stayz</div>
-        <div class="sub">Thailand · Project Hub</div>
-      </div>
-    </div>
-
-    <div class="sidebar-user" id="sidebar-user">
-      <div id="user-av"></div>
-      <div class="sidebar-user-info">
-        <div class="name" id="user-name-display">—</div>
-        <div class="role" id="user-role-display">—</div>
-      </div>
-      <div class="online-dot" title="Online"></div>
-    </div>
-
-    <div style="overflow-y:auto;flex:1">
-      <div class="sb-section">Views</div>
-      <div class="sb-item" id="nav-board" onclick="setView('board')">
-        <i class="ti ti-layout-kanban"></i><span>Board</span>
-      </div>
-      <div class="sb-item" id="nav-list" onclick="setView('list')">
-        <i class="ti ti-list"></i><span>List</span>
-      </div>
-      <div class="sb-item" id="nav-dash" onclick="setView('dashboard')">
-        <i class="ti ti-chart-bar"></i><span>Dashboard</span>
-      </div>
-
-      <div class="sb-section">Projects</div>
-      <div id="project-list"><!-- populated by renderSidebar --></div>
-      <div class="sb-item" onclick="openAddProject()">
-        <i class="ti ti-folder-plus"></i><span>New project</span>
-      </div>
-
-      <div class="sb-section">Quick filters</div>
-      <div class="sb-item" onclick="filterMyTasks()">
-        <i class="ti ti-user-check"></i><span>My tasks</span>
-      </div>
-      <div class="sb-item" onclick="filterUrgent()">
-        <i class="ti ti-flame"></i><span>Urgent</span>
-        <span class="sb-badge" id="urgent-count">0</span>
-      </div>
-      <div class="sb-item" onclick="filterDueSoon()">
-        <i class="ti ti-clock"></i><span>Due soon</span>
-      </div>
-    </div>
-
-    <div class="sidebar-bottom">
-      <div class="sb-team-label">Team online</div>
-      <div id="team-list"><!-- populated by renderSidebar --></div>
+<!-- NAME PROMPT MODAL -->
+<div class="modal-bg" id="nameModal">
+  <div class="modal">
+    <h3>👋 Your Name</h3>
+    <p>Who's marking this task complete? This gets saved so you won't be asked again.</p>
+    <input type="text" class="modal-input" id="nameInput" placeholder="e.g. Noon, Prae, Hari…" />
+    <div class="modal-foot">
+      <button class="btn btn-outline" onclick="skipName()">Skip</button>
+      <button class="btn btn-orange" onclick="saveName()">Continue</button>
     </div>
   </div>
+</div>
 
-  <!-- Main content -->
-  <div class="main">
-    <div class="topbar">
-      <div class="topbar-title" id="proj-title">
-        Villa Operations
-        <span id="proj-task-count"></span>
-      </div>
-
-      <div class="view-tabs">
-        <div class="vtab" id="tab-board" onclick="setView('board')">
-          <i class="ti ti-layout-kanban"></i> Board
-        </div>
-        <div class="vtab" id="tab-list" onclick="setView('list')">
-          <i class="ti ti-list"></i> List
-        </div>
-        <div class="vtab" id="tab-dash" onclick="setView('dashboard')">
-          <i class="ti ti-chart-bar"></i> Dashboard
-        </div>
-      </div>
-
-      <button class="btn" onclick="openFilterMenu()" title="Filter tasks">
-        <i class="ti ti-filter"></i> Filter
-      </button>
-      <button class="btn btn-primary" onclick="openAddTask()">
-        <i class="ti ti-plus"></i> Add task
-      </button>
-    </div>
-
-    <div class="content-area" id="content">
-      <!-- Views rendered here -->
-    </div>
-  </div>
-
-</div><!-- end #app -->
-
-<!-- Scripts -->
-<script src="app.js"></script>
-<script src="views.js"></script>
-<script src="taskDetail.js"></script>
 <script>
+// ═══════════════════════════════════════
+// CONFIG — use a PRIVATE GitHub repo
+// ═══════════════════════════════════════
+const AT_TOKEN  = 'patdQPKcRm79wsRxa.e5d6019c4fe6dd24ccf7c64ff4ab00ddb0db8af1dba69d8d31f4e332045ed0fc';
+const AT_BASE   = 'appND9kP55cvkDX7V';
+const TG_TOKEN  = '8697982123:AAGtPx5p8Vx0hn-Bau6z7ueLgFhPlS7wOWM';
+const DPEW_CHAT = -5240460038;
+const HARI_CHAT = 2043278046;
+const ADMIN_PWD = '8087';
+const TZ        = 'Asia/Bangkok';
 
-// ── Embed logo ───────────────────────────────────────────────
-// Logo base64 is loaded from a separate fetch to avoid blocking
-const LOGO_B64_PLACEHOLDER = '__LOGO_B64__';
+const MASTER_TBL = 'tblodAjjJy8FBQAY7';
+const COMP_TBL   = 'tblK36oDEOD1SdKQj';
 
-// ── Login ────────────────────────────────────────────────────
-function initLogin() {
-  // Populate member grid
-  const grid = document.getElementById('member-grid');
-  grid.innerHTML = MEMBERS.map(m => `
-  <div class="team-member-btn" onclick="selectMember('${m.id}',this)">
-    <div class="av" style="width:32px;height:32px;font-size:12px;background:${m.bg};color:${m.color}">${m.initials}</div>
-    <div>
-      <div style="font-size:12px;font-weight:600;color:var(--text-primary)">${m.name}</div>
-      <div style="font-size:11px;color:var(--text-muted)">${m.role}</div>
-    </div>
-  </div>`).join('');
+// Master trips field IDs
+const MT = {
+  tripId:   'fld1ziuDjSOUDfmdY',
+  tripName: 'fldOHC5sVVtVXB5Yv',
+  arrival:  'fldu81bwcyq86aBKz',
+  property: 'fldy6ALjM2cSz745M',
+  channel:  'fldrmnsj1lsZO9UoJ',
+  custName: 'fldB8I68PoBtSDWeS',
+  group:    'fldAnwCUUCiV32DCE',
+  contact:  'fldw9vgDW7PsIudZo',   // Contact Channel (from CRM contact) — multipleLookupValues
+};
+
+// Completions field IDs
+const CT = {
+  tripId:     'fldUNpm31vNyoNuGC',
+  masterRec:  'fld1RNQz0VasAfCtw',
+  property:   'fldvrWs3pfSdNce0w',
+  custName:   'fldAAib7G6qnkRJqM',
+  channel:    'fldvfNM43HeNNRq81',
+  arrival:    'fldh8ATDYHKW9V3DQ',
+  deposit:    'fldPSNu2SDgIW5SBD',
+  passport:   'fldPh5ggFtwWIAd0k',
+  electric:   'fldtMHMC0ylWZr0ae',
+  water:      'fldXkjX7159cfKD0g',
+  depositAt:  'fldX691UPBebXAhZ1',
+  passportAt: 'fldMJaSSbWKVG9omE',
+  electricAt: 'fldG5TthLcuYgXqEh',
+  waterAt:    'fldcydcrIvDvYKgep',
+  needsElec:  'fld04aLyfyfscTcnX',
+  needsWater: 'fldG7hnWqLBaDZHjp',
+  depositWaived:'fldtIg9hkHzaM06Sn',
+  electricNA: 'fldkgDZ3a0EKDWoAp',
+  waterNA:    'fldhijaiQ5NTUs4UU',
+  doneBy:     'fldIzoPJxrHYpy8dP',
+  group:      'fldOMNlOpUbTfoAwW',
+};
+
+// ═══════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════
+let tripData       = [];
+let pendingUncheck = null;
+let pendingCheck   = null;
+let selectedDate   = todayBKK();
+let refreshTimer   = null;
+let msgLog         = [];
+
+// ═══════════════════════════════════════
+// DATE HELPERS
+// ═══════════════════════════════════════
+function todayBKK() {
+  return new Date().toLocaleDateString('en-CA', { timeZone: TZ });
+}
+function fmtDate(d) {
+  return new Date(d + 'T00:00:00').toLocaleDateString('en-GB', { day:'numeric', month:'long', year:'numeric' });
+}
+function fmtTime(iso) {
+  if (!iso) return '';
+  try { return new Date(iso).toLocaleTimeString('en-US', { hour:'2-digit', minute:'2-digit', timeZone: TZ }); }
+  catch { return ''; }
+}
+function nowBKK() {
+  return new Date().toLocaleTimeString('en-US', { hour:'2-digit', minute:'2-digit', timeZone: TZ });
+}
+function tickClock() {
+  const d = new Date();
+  document.getElementById('hdrDate').textContent =
+    d.toLocaleDateString('en-US', { weekday:'long', day:'numeric', month:'long', timeZone: TZ });
+  document.getElementById('hdrTime').textContent =
+    d.toLocaleTimeString('en-US', { hour:'2-digit', minute:'2-digit', timeZone: TZ }) + ' Bangkok';
 }
 
-function selectMember(id, el) {
-  document.querySelectorAll('.team-member-btn').forEach(b => b.classList.remove('selected'));
-  el.classList.add('selected');
-  const m = getMember(id);
-  document.getElementById('login-name').value = m.name;
-  STATE.currentUser = id;
-  STATE.composerMember = id;
-}
+// ═══════════════════════════════════════
+// AIRTABLE API
+// ═══════════════════════════════════════
+async function atGet(tableId, formula, fields) {
+  // returnFieldsByFieldId=true makes the API key fields by ID (e.g. fldXXX) instead of name
+  let url = `https://api.airtable.com/v0/${AT_BASE}/${tableId}?returnFieldsByFieldId=true`;
+  const p = [];
+  if (formula) p.push('filterByFormula=' + encodeURIComponent(formula));
+  if (fields)  fields.forEach(f => p.push('fields%5B%5D=' + encodeURIComponent(f)));
+  if (p.length) url += '&' + p.join('&');
 
-function doLogin() {
-  const name = document.getElementById('login-name').value.trim();
-  if (!name) { alert('Please select a team member or enter your name'); return; }
-
-  let memberId = STATE.currentUser;
-  if (!memberId) {
-    // Try matching name
-    const found = MEMBERS.find(m => m.name.toLowerCase() === name.toLowerCase());
-    memberId = found ? found.id : 'YOU';
-  }
-
-  STATE.currentUser = memberId;
-  STATE.composerMember = memberId;
-
-  // Update sidebar user display
-  const m = getMember(memberId);
-  document.getElementById('user-av').innerHTML = `<div class="av" style="width:28px;height:28px;font-size:11px;background:${m.bg};color:${m.color}">${m.initials}</div>`;
-  document.getElementById('user-name-display').textContent = m.name;
-  document.getElementById('user-role-display').textContent = m.role;
-
-  document.getElementById('login-screen').style.display = 'none';
-  document.getElementById('app').style.display = 'flex';
-
-  renderSidebar();
-  setView('board');
-}
-
-// ── Sidebar rendering ────────────────────────────────────────
-function renderSidebar() {
-  // Projects
-  const projList = document.getElementById('project-list');
-  projList.innerHTML = PROJECTS.map(p => `
-  <div class="sb-item${p.name === STATE.currentProject ? ' active' : ''}"
-       onclick="setProject('${p.name}')">
-    <span class="proj-dot" style="background:${p.color}"></span>
-    <span>${p.name}</span>
-    <span class="sb-badge">${tasks.filter(t => t.project === p.name).length}</span>
-  </div>`).join('');
-
-  // Team
-  const teamList = document.getElementById('team-list');
-  const onlineStatuses = { YOU: true, TM1: true, TM2: true, TM3: false, TM4: true, TM5: false };
-  teamList.innerHTML = MEMBERS.map(m => `
-  <div class="sb-member">
-    <div class="av" style="width:24px;height:24px;font-size:9px;background:${m.bg};color:${m.color}">${m.initials}</div>
-    <span class="name">${m.name.split(' ')[0]}</span>
-    <div class="online" style="background:${onlineStatuses[m.id] ? '#4CAF50' : '#9E7B68'}"></div>
-  </div>`).join('');
-
-  // Nav highlights
-  const urgentCount = tasks.filter(t => t.project === STATE.currentProject && t.priority === 'Urgent').length;
-  const urgentEl = document.getElementById('urgent-count');
-  if (urgentEl) urgentEl.textContent = urgentCount;
-
-  // Project count in topbar
-  const pt = getProjTasks();
-  const titleEl = document.getElementById('proj-title');
-  if (titleEl) {
-    titleEl.innerHTML = `${STATE.currentProject} <span>${pt.length} tasks</span>`;
-  }
-}
-
-// ── View switching ───────────────────────────────────────────
-function setView(v) {
-  STATE.currentView = v;
-  ['board', 'list', 'dash'].forEach(k => {
-    const tab = document.getElementById('tab-' + k);
-    const nav = document.getElementById('nav-' + k);
-    const active = (k === v || (k === 'dash' && v === 'dashboard'));
-    if (tab) tab.classList.toggle('active', active);
-    if (nav) nav.classList.toggle('active', active);
-  });
-  render();
-}
-
-// ── Project switching ────────────────────────────────────────
-function setProject(name) {
-  STATE.currentProject = name;
-  renderSidebar();
-  render();
-}
-
-// ── Quick filters ────────────────────────────────────────────
-function filterMyTasks() {
-  const uid = STATE.currentUser;
-  const myTasks = tasks.filter(t => t.assignee === uid);
-  if (!myTasks.length) { toast('No tasks assigned to you'); return; }
-  // Switch to list view filtered
-  STATE.currentView = 'list';
-  setView('list');
-  const content = document.getElementById('content');
-  // Temporarily override to show all projects' tasks for current user
-  const saved = STATE.currentProject;
-  let html = `<div style="margin-bottom:12px;font-size:13px;font-weight:600;color:var(--text-secondary)">
-    <i class="ti ti-user-check" style="color:var(--brand-orange)"></i>
-    My tasks across all projects (${myTasks.length})
-    <button class="btn btn-xs" style="margin-left:8px" onclick="setProject('${saved}')">Back to project</button>
-  </div>
-  <div class="list-table">
-    <div class="list-header"><span>Task</span><span>Project</span><span>Status</span><span>Priority</span><span>Due</span><span></span></div>`;
-  myTasks.forEach(t => {
-    html += `<div class="list-row" onclick="openTask(${t.id})">
-      <span class="list-task-title">${t.title}</span>
-      <span style="font-size:12px;color:var(--text-muted)">${t.project}</span>
-      <span>${statusPill(t.status)}</span>
-      <span>${priorityBadge(t.priority)}</span>
-      <span style="font-size:12px;color:var(--text-muted)">${t.due}</span>
-      <span></span>
-    </div>`;
-  });
-  html += '</div>';
-  content.innerHTML = html;
-}
-
-function filterUrgent() {
-  const urgent = tasks.filter(t => t.priority === 'Urgent');
-  if (!urgent.length) { toast('No urgent tasks right now'); return; }
-  STATE.currentView = 'list';
-  setView('list');
-  const content = document.getElementById('content');
-  let html = `<div style="margin-bottom:12px;font-size:13px;font-weight:600;color:var(--urgent-text)">
-    <i class="ti ti-flame"></i> Urgent tasks (${urgent.length})
-    <button class="btn btn-xs" style="margin-left:8px" onclick="render()">Back</button>
-  </div>
-  <div class="list-table">
-    <div class="list-header"><span>Task</span><span>Project</span><span>Status</span><span>Assignee</span><span>Due</span><span></span></div>`;
-  urgent.forEach(t => {
-    const m = getMember(t.assignee);
-    html += `<div class="list-row" onclick="openTask(${t.id})">
-      <span class="list-task-title">${t.title}</span>
-      <span style="font-size:12px;color:var(--text-muted)">${t.project}</span>
-      <span>${statusPill(t.status)}</span>
-      <span style="display:flex;align-items:center;gap:5px">${avatarHtml(t.assignee,20)}<span style="font-size:12px">${m.name.split(' ')[0]}</span></span>
-      <span style="font-size:12px;color:var(--text-muted)">${t.due}</span>
-      <span></span>
-    </div>`;
-  });
-  html += '</div>';
-  content.innerHTML = html;
-}
-
-function filterDueSoon() {
-  // Tasks due within Jun 10–16 window (simulated "this week")
-  const soon = tasks.filter(t => {
-    const day = parseInt(t.due.replace('Jun ', '')) || 99;
-    return day <= 16 && t.status !== 'Done';
-  });
-  if (!soon.length) { toast('No tasks due soon'); return; }
-  STATE.currentView = 'list';
-  setView('list');
-  const content = document.getElementById('content');
-  let html = `<div style="margin-bottom:12px;font-size:13px;font-weight:600;color:var(--text-secondary)">
-    <i class="ti ti-clock" style="color:var(--brand-orange)"></i> Due soon — this week (${soon.length} tasks)
-    <button class="btn btn-xs" style="margin-left:8px" onclick="render()">Back</button>
-  </div>
-  <div class="list-table">
-    <div class="list-header"><span>Task</span><span>Project</span><span>Status</span><span>Assignee</span><span>Due</span><span></span></div>`;
-  soon.forEach(t => {
-    const m = getMember(t.assignee);
-    html += `<div class="list-row" onclick="openTask(${t.id})">
-      <span class="list-task-title">${t.title}</span>
-      <span style="font-size:12px;color:var(--text-muted)">${t.project}</span>
-      <span>${statusPill(t.status)}</span>
-      <span style="display:flex;align-items:center;gap:5px">${avatarHtml(t.assignee,20)}<span style="font-size:12px">${m.name.split(' ')[0]}</span></span>
-      <span style="font-size:12px;color:var(--brand-orange);font-weight:600">${t.due}</span>
-      <span></span>
-    </div>`;
-  });
-  html += '</div>';
-  content.innerHTML = html;
-}
-
-function openFilterMenu() {
-  showModal(`
-  <div class="modal-header">
-    <h3><i class="ti ti-filter" style="color:var(--brand-orange);margin-right:6px"></i>Filter tasks</h3>
-    <button class="btn btn-icon btn-sm" onclick="closeModal()"><i class="ti ti-x"></i></button>
-  </div>
-  <div class="modal-body">
-    <div style="display:flex;flex-direction:column;gap:8px">
-      <button class="btn" style="justify-content:flex-start" onclick="filterMyTasks();closeModal()"><i class="ti ti-user-check"></i> My tasks</button>
-      <button class="btn" style="justify-content:flex-start" onclick="filterUrgent();closeModal()"><i class="ti ti-flame"></i> Urgent tasks only</button>
-      <button class="btn" style="justify-content:flex-start" onclick="filterDueSoon();closeModal()"><i class="ti ti-clock"></i> Due this week</button>
-      <hr class="divider">
-      <button class="btn" style="justify-content:flex-start" onclick="render();closeModal()"><i class="ti ti-refresh"></i> Clear filters</button>
-    </div>
-  </div>`);
-}
-
-// ── Bootstrap ────────────────────────────────────────────────
-window.addEventListener('DOMContentLoaded', () => {
-  // Load and embed logo into both login and sidebar
-  fetch('assets/logo_small.png')
-    .then(r => r.blob())
-    .then(blob => {
-      const url = URL.createObjectURL(blob);
-      document.getElementById('login-logo').src = url;
-      document.getElementById('sidebar-logo-img').src = url;
-    })
-    .catch(() => {
-      // Fallback: use a text-only logo
-      document.getElementById('login-logo').style.display = 'none';
+  let records = [], offset = null;
+  do {
+    const r = await fetch(offset ? url + '&offset=' + offset : url, {
+      headers: { Authorization: 'Bearer ' + AT_TOKEN }
     });
+    const d = await r.json();
+    if (d.error) throw new Error(d.error.message);
+    records = records.concat(d.records || []);
+    offset  = d.offset || null;
+  } while (offset);
+  return records;
+}
 
-  initLogin();
-  // Keyboard shortcut: Escape closes detail panel
-  document.addEventListener('keydown', e => {
-    if (e.key === 'Escape') {
-      if (document.getElementById('detail-overlay')) { closeDetail(); return; }
-      if (document.getElementById('modal-overlay')?.style.display !== 'none') { closeModal(); }
+async function atPost(tableId, fields) {
+  const r = await fetch(`https://api.airtable.com/v0/${AT_BASE}/${tableId}`, {
+    method: 'POST',
+    headers: { Authorization: 'Bearer ' + AT_TOKEN, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ records: [{ fields }] })
+  });
+  const d = await r.json();
+  if (d.error) throw new Error(d.error.message);
+  return d.records?.[0];
+}
+
+async function atPatch(tableId, recId, fields) {
+  const r = await fetch(`https://api.airtable.com/v0/${AT_BASE}/${tableId}/${recId}`, {
+    method: 'PATCH',
+    headers: { Authorization: 'Bearer ' + AT_TOKEN, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ fields })
+  });
+  const d = await r.json();
+  if (d.error) throw new Error(d.error.message);
+  return d;
+}
+
+// ═══════════════════════════════════════
+// TELEGRAM
+// ═══════════════════════════════════════
+async function tgSend(chatId, text) {
+  try {
+    const r = await fetch(`https://api.telegram.org/bot${TG_TOKEN}/sendMessage`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ chat_id: chatId, text, parse_mode: 'HTML' })
+    });
+    const d = await r.json();
+    addLog(chatId === DPEW_CHAT ? 'DPEW Group' : 'Hari Ananth', d.ok, text.substring(0, 100));
+    return d.ok;
+  } catch(e) {
+    addLog(chatId === DPEW_CHAT ? 'DPEW Group' : 'Hari Ananth', false, e.message);
+    return false;
+  }
+}
+
+// ═══════════════════════════════════════
+// BUSINESS RULES
+// ═══════════════════════════════════════
+function rules(property, channel) {
+  const bdc = (channel||'').toLowerCase().includes('booking');
+  const snt = (property||'').toUpperCase().includes('SNT');
+  return { needsElec: !bdc, needsWater: !bdc && !snt };
+}
+
+function extractName(v) {
+  if (!v) return '';
+  if (Array.isArray(v)) return v.join(', ');
+  if (typeof v === 'object' && v.valuesByLinkedRecordId)
+    return Object.values(v.valuesByLinkedRecordId).flat().join(', ');
+  return String(v);
+}
+
+// ═══════════════════════════════════════
+// LOAD DATA
+// ═══════════════════════════════════════
+async function loadData() {
+  document.getElementById('cardsGrid').innerHTML =
+    '<div class="state-box"><span class="state-icon spin">⏳</span><h3>Loading check-ins…</h3></div>';
+  setSummary('—','—','—','—');
+
+  try {
+    const isToday = selectedDate === todayBKK();
+
+    // Build date filter using YEAR/MONTH/DAY — most reliable across timezones
+    const [yr, mo, dy] = selectedDate.split('-').map(Number);
+    const dateFilter = `AND(YEAR({Arrival Date})=${yr}, MONTH({Arrival Date})=${mo}, DAY({Arrival Date})=${dy})`;
+
+    // Today: confirmed arrivals only
+    // Past dates: any Phuket trip on that date (status already changed)
+    const formula = isToday
+      ? `AND(${dateFilter}, FIND('Phuket', {City}), {Inquiry status}='Paid and confirmed')`
+      : `AND(${dateFilter}, FIND('Phuket', {City}), OR({Inquiry status}='Checked-In', {Inquiry status}='Trip completed'))`;
+    const fields  = Object.values(MT);
+
+    const [rawTrips, rawComps] = await Promise.all([
+      atGet(MASTER_TBL, formula, fields),
+      atGet(COMP_TBL, `AND(YEAR({Arrival Date})=${yr}, MONTH({Arrival Date})=${mo}, DAY({Arrival Date})=${dy})`)
+    ]);
+
+    const compByMid = {};
+    rawComps.forEach(r => {
+      const mid = r.fields[CT.masterRec];
+      if (mid) compByMid[mid] = r;
+    });
+    tripData = [];
+    const creates = [];
+
+    for (const raw of rawTrips) {
+      const f        = raw.fields;
+      const property = f[MT.property] || '';
+      const channel  = typeof f[MT.channel] === 'object' ? (f[MT.channel]?.name || '') : (f[MT.channel] || '');
+      const contact  = extractName(f[MT.contact]);  // Contact Channel from CRM contact (multipleLookupValues)
+      const custName = extractName(f[MT.custName]);
+      const group    = f[MT.group] || '';
+      const tripName = f[MT.tripName] || '';
+      const { needsElec, needsWater } = rules(property, channel);
+      const mid = raw.id;
+
+      tripData.push({
+        masterRecId: mid,
+        tripId: f[MT.tripId] || '',
+        tripName, property, channel, contact, custName, group,
+        needsElec, needsWater,
+        compId: compByMid[mid]?.id    || null,
+        cf:     compByMid[mid]?.fields || {},
+        noRecord: !compByMid[mid],  // flag: no completion record found
+      });
+
+      // Only create missing completion records for TODAY — never for past dates
+      if (!compByMid[mid] && isToday) {
+        creates.push({ tripIdx: tripData.length - 1, mid, property, channel, custName, group, needsElec, needsWater });
+      }
+    }
+
+    // Create missing records only for today's check-ins
+    if (creates.length) {
+      await Promise.all(creates.map(async ({ tripIdx, mid, property, channel, custName, group, needsElec, needsWater }) => {
+        const rec = await atPost(COMP_TBL, {
+          [CT.tripId]:    tripData[tripIdx].tripId,
+          [CT.masterRec]: mid,
+          [CT.property]:  property,
+          [CT.custName]:  custName,
+          [CT.channel]:   channel,
+          [CT.arrival]:   selectedDate,
+          [CT.needsElec]: needsElec,
+          [CT.needsWater]:needsWater,
+          [CT.group]:     group,
+          [CT.deposit]:       false, [CT.passport]:  false,
+          [CT.electric]:      false, [CT.water]:     false,
+          [CT.depositWaived]: false,
+          [CT.electricNA]:    false, [CT.waterNA]:   false,
+        });
+        if (rec) {
+          tripData[tripIdx].compId   = rec.id;
+          tripData[tripIdx].cf       = rec.fields;
+          tripData[tripIdx].noRecord = false;
+        }
+      }));
+    }
+
+    renderCards();
+    updateSummary();
+
+  } catch(e) {
+    document.getElementById('cardsGrid').innerHTML =
+      `<div class="state-box"><span class="state-icon">❌</span><h3>Error loading data</h3>
+       <p style="color:var(--danger);font-size:13px;margin-top:6px">${e.message}</p>
+       <button class="btn btn-orange" style="margin-top:18px" onclick="loadData()">Try Again</button></div>`;
+  }
+}
+
+// ═══════════════════════════════════════
+// RENDER
+// ═══════════════════════════════════════
+function renderCards() {
+  if (!tripData.length) {
+    document.getElementById('cardsGrid').innerHTML =
+      '<div class="state-box"><span class="state-icon">🌴</span><h3>No Phuket check-ins for this date</h3></div>';
+    return;
+  }
+  document.getElementById('cardsGrid').innerHTML =
+    `<div class="cards-grid">${tripData.map((t,i) => cardHTML(t,i)).join('')}</div>`;
+}
+
+function cardHTML(trip, idx) {
+  const tasks   = taskList(trip);
+  const total   = tasks.length;
+  const done    = tasks.filter(t=>isResolved(t)).length;
+  const pct     = total ? Math.round(done/total*100) : 0;
+  const allDone = done === total;
+  const anyDone = done > 0;
+
+  const cls     = allDone ? 'card-done' : anyDone ? 'card-partial' : 'card-pending';
+  const pbCls   = pct===100 ? 'pb-done' : pct>0 ? 'pb-partial' : 'pb-zero';
+  const emoji   = allDone ? '✅' : anyDone ? '🔄' : '⏳';
+  const chBadge = channelBadge(trip.channel);
+  const coBadge = trip.contact ? `<span class="badge badge-teal">💬 ${esc(trip.contact)}</span>` : '';
+
+  return `
+<div class="trip-card ${cls}" id="card-${idx}">
+  <div class="card-topbar">
+
+    <!-- Row 1: Property + status -->
+    <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:6px">
+      <div class="card-prop">${esc(trip.property)}</div>
+      <span style="font-size:22px;flex-shrink:0">${emoji}</span>
+    </div>
+
+    <!-- Row 2: Customer group naming -->
+    <div style="font-size:12px;font-weight:700;color:var(--orange-dk);background:var(--orange-lt);border-radius:6px;padding:4px 8px;margin-bottom:8px;word-break:break-all;line-height:1.5;">
+      📋 ${esc(trip.group)}
+    </div>
+
+    <!-- Row 3: Customer name -->
+    <div style="display:flex;align-items:center;gap:7px;margin-bottom:8px;">
+      <span class="card-status-dot"></span>
+      <span style="font-size:15px;font-weight:700;color:var(--brown);">👤 ${esc(trip.custName)}</span>
+    </div>
+
+    <!-- Row 4: Badges -->
+    <div class="badges">${chBadge}${coBadge}</div>
+  </div>
+
+  <div class="card-body">
+    ${trip.noRecord ? `<div style="font-size:12px;color:var(--gray-500);background:var(--gray-100);border-radius:8px;padding:8px 12px;margin-bottom:12px;text-align:center;">📭 No check-in record was tracked for this date</div>` : ''}
+    <div class="tasks" id="tasks-${idx}">
+      ${tasks.map(t => taskRowHTML(idx, t)).join('')}
+    </div>
+    <div class="prog-wrap">
+      <div class="prog-meta">
+        <span>${done}/${total} tasks done</span><span>${pct}%</span>
+      </div>
+      <div class="prog-track">
+        <div class="prog-bar ${pbCls}" id="prog-${idx}" style="width:${pct}%"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card-foot" id="foot-${idx}">
+    <button class="btn btn-teal btn-sm" onclick="sendTripUpdate(${idx})">📨 Send Update</button>
+    ${allDone ? '<span class="done-tag">✅ All tasks done!</span>' : ''}
+  </div>
+</div>`;
+}
+
+function taskRowHTML(idx, t) {
+  const rowCls = t.isNA ? 't-na-marked' : t.done ? 't-done' : '';
+  const btnLabel  = t.isNA ? `✕ ${t.naLabel} (undo)` : t.naLabel;
+  const naBtn     = t.hasNA
+    ? `<button class="na-btn ${t.isNA?'na-active':''}"
+         onclick="event.stopPropagation();onNAClick(${idx},'${t.key}','${t.naFieldId}',${t.isNA})"
+         title="${t.naLabel}">${btnLabel}</button>`
+    : '';
+  const naText    = t.isNA ? (t.naLabel === 'No Deposit' ? 'Waived' : 'Not applicable') : '';
+  return `
+<div class="task-row ${rowCls}" id="task-${idx}-${t.key}"
+     onclick="onTaskClick(${idx},'${t.key}','${t.fieldId}','${t.atFieldId}',${t.done},${t.isNA})">
+  <div class="task-box">
+    <svg class="check-svg" width="13" height="10" viewBox="0 0 13 10" fill="none">
+      <path d="M1.5 5L5 8.5L11.5 1.5" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+  </div>
+  <span class="task-label">${t.label}</span>
+  ${naText ? `<span class="na-label">${naText}</span>` : ''}
+  ${t.done && t.timeVal && !t.isNA ? `<span class="task-time">${fmtTime(t.timeVal)}</span>` : ''}
+  ${t.done && !t.isNA ? '<span class="lock-icon">🔒</span>' : ''}
+  ${naBtn}
+</div>`;
+}
+
+function taskList(trip) {
+  const cf = trip.cf;
+  return [
+    { key:'deposit',  label:'💵 Deposit Collected',      fieldId:CT.deposit,   atFieldId:CT.depositAt,  done:!!cf[CT.deposit],  timeVal:cf[CT.depositAt],  show:true,             hasNA:true,  isNA:!!cf[CT.depositWaived],  naFieldId:CT.depositWaived, naLabel:'No Deposit' },
+    { key:'passport', label:'🛂 Passport Photo Taken',   fieldId:CT.passport,  atFieldId:CT.passportAt, done:!!cf[CT.passport], timeVal:cf[CT.passportAt], show:true,             hasNA:false, isNA:false,                   naFieldId:null,             naLabel:'' },
+    { key:'electric', label:'⚡ Electric Meter Reading', fieldId:CT.electric,  atFieldId:CT.electricAt, done:!!cf[CT.electric], timeVal:cf[CT.electricAt], show:trip.needsElec,   hasNA:true,  isNA:!!cf[CT.electricNA],     naFieldId:CT.electricNA,    naLabel:'N/A' },
+    { key:'water',    label:'💧 Water Meter Reading',    fieldId:CT.water,     atFieldId:CT.waterAt,    done:!!cf[CT.water],    timeVal:cf[CT.waterAt],    show:trip.needsWater,  hasNA:true,  isNA:!!cf[CT.waterNA],        naFieldId:CT.waterNA,       naLabel:'N/A' },
+  ].filter(t => t.show);
+}
+
+// A task counts as "resolved" if done OR marked N/A
+function isResolved(t) { return t.done || t.isNA; }
+
+function channelBadge(ch) {
+  const c = (ch||'').toLowerCase();
+  let cls = 'badge-gray';
+  if (c.includes('airbnb'))  cls = 'badge-airbnb';
+  else if (c.includes('booking')) cls = 'badge-booking';
+  else if (c.includes('cash')) cls = 'badge-cash';
+  else if (c.includes('direct')) cls = 'badge-direct';
+  else if (c.includes('agent')) cls = 'badge-agent';
+  return `<span class="badge ${cls}">📦 ${esc(ch)}</span>`;
+}
+
+function esc(s) {
+  return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+// ═══════════════════════════════════════
+// TASK CLICK
+// ═══════════════════════════════════════
+function onTaskClick(idx, key, fieldId, atFieldId, currentDone, currentNA) {
+  if (currentNA) return; // N/A tasks can only be changed via the N/A button
+  if (currentDone) {
+    pendingUncheck = { idx, key, fieldId, atFieldId };
+    document.getElementById('adminPass').value = '';
+    document.getElementById('adminErr').textContent = '';
+    document.getElementById('adminModal').classList.add('open');
+    setTimeout(() => document.getElementById('adminPass').focus(), 50);
+  } else {
+    const name = localStorage.getItem('ms_name');
+    if (!name) {
+      pendingCheck = { idx, key, fieldId, atFieldId };
+      document.getElementById('nameInput').value = '';
+      document.getElementById('nameModal').classList.add('open');
+      setTimeout(() => document.getElementById('nameInput').focus(), 50);
+    } else {
+      doCheck(idx, key, fieldId, atFieldId, name);
+    }
+  }
+}
+
+async function doCheck(idx, key, fieldId, atFieldId, name) {
+  const trip = tripData[idx];
+  if (!trip?.compId) { toast('No completion record — try refreshing', 'err'); return; }
+  markSaving(idx, key, true);
+  try {
+    const now = new Date().toISOString();
+    await atPatch(COMP_TBL, trip.compId, {
+      [fieldId]: true, [atFieldId]: now, [CT.doneBy]: name || 'Team',
+    });
+    trip.cf[fieldId] = true;
+    trip.cf[atFieldId] = now;
+    refreshCard(idx);
+    updateSummary();
+    toast('✅ Marked complete!', 'ok');
+  } catch(e) {
+    toast('Failed to save: ' + e.message, 'err');
+  } finally { markSaving(idx, key, false); }
+}
+
+async function doUncheck(idx, key, fieldId, atFieldId) {
+  const trip = tripData[idx];
+  if (!trip?.compId) { toast('No completion record', 'err'); return; }
+  markSaving(idx, key, true);
+  try {
+    await atPatch(COMP_TBL, trip.compId, { [fieldId]: false, [atFieldId]: null });
+    trip.cf[fieldId] = false;
+    trip.cf[atFieldId] = null;
+    refreshCard(idx);
+    updateSummary();
+    toast('Unchecked by admin', 'info');
+  } catch(e) {
+    toast('Failed to uncheck: ' + e.message, 'err');
+  } finally { markSaving(idx, key, false); }
+}
+
+function markSaving(idx, key, saving) {
+  const el = document.getElementById(`task-${idx}-${key}`);
+  if (el) el.classList.toggle('t-saving', saving);
+}
+
+function closeAdmin() {
+  document.getElementById('adminModal').classList.remove('open');
+  pendingUncheck = null;
+}
+
+function confirmUncheck() {
+  const pwd = document.getElementById('adminPass').value;
+  if (pwd !== ADMIN_PWD) {
+    document.getElementById('adminErr').textContent = '✗ Incorrect password.';
+    document.getElementById('adminPass').value = '';
+    return;
+  }
+  document.getElementById('adminModal').classList.remove('open');
+  if (pendingUncheck) {
+    const { idx, key, fieldId, atFieldId, isNAUndo } = pendingUncheck;
+    pendingUncheck = null;
+    if (isNAUndo) {
+      // Undo N/A: set the NA field back to false
+      const trip = tripData[idx];
+      atPatch(COMP_TBL, trip.compId, { [fieldId]: false }).then(() => {
+        trip.cf[fieldId] = false;
+        refreshCard(idx);
+        updateSummary();
+        toast('N/A removed', 'info');
+      }).catch(e => toast('Failed: ' + e.message, 'err'));
+    } else {
+      doUncheck(idx, key, fieldId, atFieldId);
+    }
+  }
+}
+document.getElementById('adminPass').addEventListener('keydown', e => { if (e.key==='Enter') confirmUncheck(); });
+
+// ═══════════════════════════════════════
+// N/A TOGGLE
+// ═══════════════════════════════════════
+async function onNAClick(idx, key, naFieldId, currentNA) {
+  const trip = tripData[idx];
+  if (!trip?.compId) { toast('No completion record — try refreshing', 'err'); return; }
+
+  if (currentNA) {
+    // Undo N/A requires admin (same protection as unchecking a done task)
+    pendingUncheck = { idx, key, fieldId: naFieldId, atFieldId: null, isNAUndo: true };
+    document.getElementById('adminPass').value = '';
+    document.getElementById('adminErr').textContent = '';
+    document.getElementById('adminModal').classList.add('open');
+    setTimeout(() => document.getElementById('adminPass').focus(), 50);
+    return;
+  }
+
+  // Mark as N/A — anyone can do this
+  markSaving(idx, key, true);
+  try {
+    await atPatch(COMP_TBL, trip.compId, { [naFieldId]: true });
+    trip.cf[naFieldId] = true;
+    refreshCard(idx);
+    updateSummary();
+    toast('Marked as Not Applicable', 'info');
+  } catch(e) {
+    toast('Failed: ' + e.message, 'err');
+  } finally { markSaving(idx, key, false); }
+}
+
+function skipName() {
+  document.getElementById('nameModal').classList.remove('open');
+  if (pendingCheck) {
+    const { idx, key, fieldId, atFieldId } = pendingCheck;
+    pendingCheck = null;
+    doCheck(idx, key, fieldId, atFieldId, 'Team');
+  }
+}
+
+function saveName() {
+  const name = document.getElementById('nameInput').value.trim() || 'Team';
+  localStorage.setItem('ms_name', name);
+  document.getElementById('nameModal').classList.remove('open');
+  if (pendingCheck) {
+    const { idx, key, fieldId, atFieldId } = pendingCheck;
+    pendingCheck = null;
+    doCheck(idx, key, fieldId, atFieldId, name);
+  }
+}
+document.getElementById('nameInput').addEventListener('keydown', e => { if (e.key==='Enter') saveName(); });
+
+// ═══════════════════════════════════════
+// REFRESH SINGLE CARD
+// ═══════════════════════════════════════
+function refreshCard(idx) {
+  const trip  = tripData[idx];
+  const tasks = taskList(trip);
+  const total = tasks.length;
+  const done  = tasks.filter(t=>isResolved(t)).length;
+  const pct   = total ? Math.round(done/total*100) : 0;
+  const allDone = done===total, anyDone = done>0;
+
+  const card = document.getElementById(`card-${idx}`);
+  if (!card) return;
+  card.className = `trip-card ${allDone?'card-done':anyDone?'card-partial':'card-pending'}`;
+  card.querySelector('.card-status-dot').style.background =
+    allDone ? 'var(--success)' : anyDone ? 'var(--gold)' : 'var(--danger)';
+  card.querySelector('[style*="font-size:22px"]').textContent =
+    allDone ? '✅' : anyDone ? '🔄' : '⏳';
+
+  document.getElementById(`tasks-${idx}`).innerHTML = tasks.map(t => taskRowHTML(idx, t)).join('');
+
+  const bar = document.getElementById(`prog-${idx}`);
+  if (bar) { bar.style.width = pct+'%'; bar.className = `prog-bar ${pct===100?'pb-done':pct>0?'pb-partial':'pb-zero'}`; }
+  card.querySelector('.prog-meta').innerHTML = `<span>${done}/${total} tasks done</span><span>${pct}%</span>`;
+
+  document.getElementById(`foot-${idx}`).innerHTML = `
+    <button class="btn btn-teal btn-sm" onclick="sendTripUpdate(${idx})">📨 Send Update</button>
+    ${allDone ? '<span class="done-tag">✅ All tasks done!</span>' : ''}`;
+}
+
+// ═══════════════════════════════════════
+// SUMMARY
+// ═══════════════════════════════════════
+function setSummary(t,d,p,pen) {
+  ['sTotal','sDone','sProg','sPend'].forEach((id,i) => document.getElementById(id).textContent=[t,d,p,pen][i]);
+}
+function updateSummary() {
+  let done=0,prog=0,pend=0;
+  tripData.forEach(trip => {
+    const tasks = taskList(trip);
+    const dc = tasks.filter(t=>isResolved(t)).length;
+    if (dc===tasks.length) done++;
+    else if (dc>0) prog++;
+    pend += tasks.filter(t=>!isResolved(t)).length;
+  });
+  setSummary(tripData.length, done, prog, pend);
+}
+
+// ═══════════════════════════════════════
+// DATE PICKER
+// ═══════════════════════════════════════
+function onDateChange() {
+  selectedDate = document.getElementById('datePicker').value || todayBKK();
+  document.getElementById('pillDate').textContent =
+    selectedDate === todayBKK() ? 'Today — ' + fmtDate(selectedDate) : fmtDate(selectedDate);
+  loadData();
+}
+
+// ═══════════════════════════════════════
+// TELEGRAM SENDS
+// ═══════════════════════════════════════
+async function sendBriefing() {
+  const btn = document.getElementById('briefBtn');
+  const btn2 = document.getElementById('tgBtn');
+  [btn,btn2].forEach(b=>{if(b){b.disabled=true;b.textContent='⏳ Sending…';}});
+
+  const date = fmtDate(selectedDate);
+  let msg = `🌅 <b>Good morning! Check-in Briefing — ${date}</b>\n\n`;
+
+  if (!tripData.length) {
+    msg += '🌴 No Phuket check-ins today. Have a great day!';
+  } else {
+    msg += `📋 <b>${tripData.length} check-in(s) today — Phuket:</b>\n`;
+    tripData.forEach(t => {
+      const tasks = ['☐ 💵 Deposit','☐ 🛂 Passport'];
+      if (t.needsElec)  tasks.push('☐ ⚡ Electric Meter');
+      if (t.needsWater) tasks.push('☐ 💧 Water Meter');
+      msg += `\n🏠 <b>${t.property}</b>  |  👤 ${t.custName}\n`;
+      msg += `📦 ${t.channel}`;
+      if (t.contact) msg += `  |  💬 ${t.contact}`;
+      msg += `\n📌 ${t.group}\n` + tasks.join('\n') + '\n';
+    });
+    msg += '\n📊 Tick off tasks in the dashboard as you complete them.';
+  }
+
+  const ok = await tgSend(DPEW_CHAT, msg);
+  toast(ok ? '📨 Morning briefing sent to DPEW!' : '❌ Failed to send', ok?'ok':'err');
+  [btn,btn2].forEach(b=>{if(b){b.disabled=false;b.textContent=b===btn?'📨 Morning Briefing':'📨 Send to DPEW';}});
+}
+
+async function sendTripUpdate(idx) {
+  const trip    = tripData[idx];
+  const tasks   = taskList(trip);
+  const resolved = tasks.filter(t => isResolved(t)).length;
+  const allDone  = resolved === tasks.length;
+
+  let msg = `${allDone?'✅':'⚠️'} <b>${esc(trip.property)} — Check-in Update</b>\n\n`;
+  msg += `👤 ${trip.custName}  |  ${trip.channel}`;
+  if (trip.contact) msg += `  |  💬 ${trip.contact}`;
+  msg += `\n\n<b>Protocol Status (${resolved}/${tasks.length}):</b>\n`;
+  tasks.forEach(t => {
+    if (t.isNA) {
+      // Waived / N/A tasks — show clearly in message
+      if (t.naLabel === 'No Deposit') {
+        msg += `🚫 ${t.label} — <i>No Deposit (Waived)</i>\n`;
+      } else {
+        msg += `〰️ ${t.label} — <i>Not Applicable</i>\n`;
+      }
+    } else {
+      msg += `${t.done?'✅':'☐'} ${t.label}${t.done&&t.timeVal?' ['+fmtTime(t.timeVal)+']':''}\n`;
     }
   });
-});
+  if (!allDone) msg += `\n⚠️ <b>Pending items need attention!</b>`;
 
-// Expose globals needed by inline onclick handlers
-window.setView = setView;
-window.setProject = setProject;
-window.renderSidebar = renderSidebar;
-window.filterMyTasks = filterMyTasks;
-window.filterUrgent = filterUrgent;
-window.filterDueSoon = filterDueSoon;
-window.openFilterMenu = openFilterMenu;
-window.doLogin = doLogin;
-window.selectMember = selectMember;
+  const ok = await tgSend(DPEW_CHAT, msg);
+  toast(ok ? '📨 Update sent to DPEW!' : '❌ Failed to send', ok?'ok':'err');
+}
+
+// ═══════════════════════════════════════
+// LOG
+// ═══════════════════════════════════════
+function addLog(recipient, ok, preview) {
+  msgLog.unshift({ time: nowBKK(), recipient, ok, preview });
+  if (msgLog.length > 50) msgLog.pop();
+  document.getElementById('logBody').innerHTML = msgLog.map(l => `
+    <tr>
+      <td>${l.time}</td><td>${l.recipient}</td>
+      <td class="${l.ok?'log-ok':'log-fail'}">${l.ok?'Sent ✅':'Failed ❌'}</td>
+      <td>${esc(l.preview)}…</td>
+    </tr>`).join('');
+}
+
+function toggleLog() {
+  const p = document.getElementById('logPanel');
+  const open = p.classList.toggle('open');
+  document.querySelector('.log-toggle button').textContent = open ? '📝 Hide Message Log' : '📝 Show Message Log';
+}
+
+// ═══════════════════════════════════════
+// TOAST
+// ═══════════════════════════════════════
+function toast(msg, type='info') {
+  const area = document.getElementById('toasts');
+  const el = document.createElement('div');
+  el.className = `toast toast-${type==='ok'?'ok':type==='err'?'err':type==='warn'?'warn':'info'}`;
+  el.textContent = msg;
+  area.appendChild(el);
+  setTimeout(() => { el.style.opacity='0'; el.style.transition='opacity .4s'; setTimeout(()=>el.remove(),400); }, 3800);
+}
+
+// ═══════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════
+(function init() {
+  const today = todayBKK();
+  document.getElementById('datePicker').value = today;
+  document.getElementById('pillDate').textContent = 'Today — ' + fmtDate(today);
+  tickClock();
+  setInterval(tickClock, 30000);
+  loadData();
+  refreshTimer = setInterval(loadData, 5 * 60 * 1000);
+})();
 </script>
-
 </body>
 </html>
