@@ -120,6 +120,25 @@ body{font-family:'Inter',sans-serif;background:var(--cream);color:var(--brown);m
   transition:all .15s;white-space:nowrap;flex-shrink:0;
 }
 .na-btn:hover{background:var(--gray-100);border-color:var(--gray-500);}
+/* ── Check-in / Check-out sections ── */
+.section-head{font-size:19px;font-weight:800;margin:28px 0 14px;padding-left:12px;display:flex;align-items:center;gap:8px;}
+.sh-in{color:var(--orange-dk);border-left:5px solid var(--orange);}
+.sh-out{color:var(--teal-dk);border-left:5px solid var(--teal);}
+.section-empty{background:var(--white);border:1.5px dashed var(--gray-200);border-radius:12px;padding:22px;text-align:center;color:var(--gray-500);font-size:13px;margin-bottom:8px;}
+.trip-card.card-out{background:#F2FBFA;border:1.5px solid var(--teal);}
+.card-out .card-topbar{background:linear-gradient(135deg,#E2F6F3,#F2FBFA);}
+.card-out .card-prop{color:var(--teal-dk);}
+.mode-chip{font-size:10px;font-weight:800;letter-spacing:.5px;padding:3px 8px;border-radius:20px;text-transform:uppercase;}
+.chip-in{background:var(--orange-lt);color:var(--orange-dk);}
+.chip-out{background:#CDEFEA;color:var(--teal-dk);}
+/* ── Meter reading blocks ── */
+.meter-block{margin:4px 0 10px 34px;padding:10px 12px;background:var(--gray-100);border:1px dashed var(--gray-200);border-radius:9px;}
+.meter-block label{display:block;font-size:11px;font-weight:700;color:var(--gray-700);margin-bottom:4px;}
+.meter-block input{width:100%;box-sizing:border-box;padding:7px 10px;border:1.5px solid var(--gray-200);border-radius:8px;font-size:13px;font-family:inherit;}
+.meter-block input:disabled{background:#EDEDED;color:var(--gray-500);}
+.meter-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:8px;}
+.calc-btn{width:100%;justify-content:center;margin-top:2px;}
+.charge-amt{margin-top:8px;font-size:14px;font-weight:800;color:var(--teal-dk);text-align:center;}
 .na-btn.na-active{background:#F3F4F6;border-color:#9CA3AF;color:#374151;font-style:italic;}
 .na-label{font-size:11px;color:var(--gray-500);font-style:italic;margin-left:4px;}
 
@@ -196,7 +215,7 @@ body{font-family:'Inter',sans-serif;background:var(--cream);color:var(--brown);m
       <strong id="hdrDate">—</strong>
       <span id="hdrTime">Bangkok Time</span>
     </div>
-    <button class="btn btn-ghost btn-sm" onclick="loadData()">🔄 Refresh</button>
+    <button class="btn btn-ghost btn-sm" onclick="prevMode ? loadPrevTrips() : loadData()">🔄 Refresh</button>
     <button class="btn btn-ghost btn-sm" id="briefBtn" onclick="sendBriefing()">📨 Morning Briefing</button>
   </div>
 </header>
@@ -207,6 +226,7 @@ body{font-family:'Inter',sans-serif;background:var(--cream);color:var(--brown);m
     <div class="action-bar-left">
       <div class="date-pill">📅 <span id="pillDate">Today</span></div>
       <input type="date" id="datePicker" style="padding:7px 12px;border:1.5px solid var(--gray-200);border-radius:9px;font-size:13px;font-family:inherit;cursor:pointer;background:var(--white);" onchange="onDateChange()" />
+      <button class="btn btn-outline btn-sm" id="prevBtn" onclick="togglePrevTrips()">🗂️ Previous Trips</button>
     </div>
     <button class="btn btn-teal btn-sm" onclick="sendBriefing()" id="tgBtn">📨 Send to DPEW</button>
   </div>
@@ -288,6 +308,7 @@ const MT = {
   custName: 'fldB8I68PoBtSDWeS',
   group:    'fldAnwCUUCiV32DCE',
   contact:  'fldw9vgDW7PsIudZo',   // Contact Channel (from CRM contact) — multipleLookupValues
+  checkout: 'fldiQISqiSkO45tvn',   // Checkout Date
 };
 
 // Completions field IDs
@@ -313,7 +334,24 @@ const CT = {
   waterNA:    'fldhijaiQ5NTUs4UU',
   doneBy:     'fldIzoPJxrHYpy8dP',
   group:      'fldOMNlOpUbTfoAwW',
+  // ── Meter readings & check-out protocol ──
+  elecStart:      'fldXGKtMnumXtfZjr',
+  waterStart:     'fldFVzTgJ6I9punJ8',
+  elecEnd:        'fldalZfIKA0LGixz1',
+  waterEnd:       'fldELHFaO2Xu1rjdk',
+  elecCharges:    'fldexgzLBqIiz0ejK',
+  waterCharges:   'fldzB8Dg3wM82vswz',
+  depositRet:     'fldjoXaHMKY2nXV8X',
+  elecChargeDone: 'fldKXTxKFVg8123iZ',
+  waterChargeDone:'fld276er0j5Ibrpbp',
+  depositRetAt:   'fld7mDee17Y2oEkLB',
+  elecChargeAt:   'fldBFVRlKzNo9rsK9',
+  waterChargeAt:  'fldfAHhWTKHlvXPxt',
+  checkoutDate:   'fldg1mZWcduj0uPjq',
 };
+
+const RATE_ELEC  = 6;    // THB per unit
+const RATE_WATER = 50;   // THB per unit
 
 // ═══════════════════════════════════════
 // STATE
@@ -324,6 +362,7 @@ let pendingCheck   = null;
 let selectedDate   = todayBKK();
 let refreshTimer   = null;
 let msgLog         = [];
+let prevMode       = false;
 
 // ═══════════════════════════════════════
 // DATE HELPERS
@@ -454,10 +493,33 @@ async function loadData() {
       : `AND(${dateFilter}, FIND('Phuket', {City}), OR({Inquiry status}='Checked-In', {Inquiry status}='Trip completed'))`;
     const fields  = Object.values(MT);
 
-    const [rawTrips, rawComps] = await Promise.all([
+    // Check-outs: trips departing on the selected date
+    const outDateFilter = `AND(YEAR({Checkout Date})=${yr}, MONTH({Checkout Date})=${mo}, DAY({Checkout Date})=${dy})`;
+    const outFormula = `AND(${outDateFilter}, FIND('Phuket', {City}), OR({Inquiry status}='Checked-In', {Inquiry status}='Trip completed', {Inquiry status}='Paid and confirmed'))`;
+
+    const [rawTrips, rawComps, rawOuts] = await Promise.all([
       atGet(MASTER_TBL, formula, fields),
-      atGet(COMP_TBL, `AND(YEAR({Arrival Date})=${yr}, MONTH({Arrival Date})=${mo}, DAY({Arrival Date})=${dy})`)
+      atGet(COMP_TBL, `AND(YEAR({Arrival Date})=${yr}, MONTH({Arrival Date})=${mo}, DAY({Arrival Date})=${dy})`),
+      atGet(MASTER_TBL, outFormula, fields)
     ]);
+
+    // Fetch completion records (created at check-in) for the departing trips
+    let outComps = [];
+    if (rawOuts.length) {
+      const orParts = rawOuts.map(r => `{Master Trip Record ID}='${r.id}'`);
+      outComps = await atGet(COMP_TBL, `OR(${orParts.join(',')})`);
+    }
+    const outCompByMid = {};
+    outComps.forEach(r => {
+      const mid = r.fields[CT.masterRec];
+      if (!mid) return;
+      const existing = outCompByMid[mid];
+      const hasData = r.fields[CT.property] || r.fields[CT.custName];
+      // Prefer the record that actually has check-in data over blank duplicates
+      if (!existing || (hasData && !(existing.fields[CT.property] || existing.fields[CT.custName]))) {
+        outCompByMid[mid] = r;
+      }
+    });
 
     const compByMid = {};
     rawComps.forEach(r => {
@@ -479,9 +541,12 @@ async function loadData() {
       const mid = raw.id;
 
       tripData.push({
+        mode: 'in',
         masterRecId: mid,
         tripId: f[MT.tripId] || '',
         tripName, property, channel, contact, custName, group,
+        arrival:  f[MT.arrival]  || selectedDate,
+        checkout: f[MT.checkout] || '',
         needsElec, needsWater,
         compId: compByMid[mid]?.id    || null,
         cf:     compByMid[mid]?.fields || {},
@@ -494,6 +559,66 @@ async function loadData() {
       }
     }
 
+    // ── Build CHECK-OUT cards ──
+    const outCreates = [];
+    for (const raw of rawOuts) {
+      const f        = raw.fields;
+      const property = f[MT.property] || '';
+      const channel  = typeof f[MT.channel] === 'object' ? (f[MT.channel]?.name || '') : (f[MT.channel] || '');
+      const contact  = extractName(f[MT.contact]);
+      const custName = extractName(f[MT.custName]);
+      const group    = f[MT.group] || '';
+      const tripName = f[MT.tripName] || '';
+      const { needsElec, needsWater } = rules(property, channel);
+      const mid = raw.id;
+      const comp = outCompByMid[mid];
+
+      tripData.push({
+        mode: 'out',
+        masterRecId: mid,
+        tripId: f[MT.tripId] || '',
+        tripName, property, channel, contact, custName, group,
+        arrival:  f[MT.arrival]  || '',
+        checkout: f[MT.checkout] || selectedDate,
+        needsElec, needsWater,
+        compId: comp?.id     || null,
+        cf:     comp?.fields || {},
+        noRecord: !comp,
+      });
+
+      if (!comp && isToday) {
+        outCreates.push({ tripIdx: tripData.length - 1, mid, property, channel, custName, group, needsElec, needsWater,
+                          arrival: f[MT.arrival] || '', checkout: f[MT.checkout] || selectedDate });
+      }
+    }
+
+    // Create missing completion records for today's check-outs (older trips without records)
+    if (outCreates.length) {
+      await Promise.all(outCreates.map(async ({ tripIdx, mid, property, channel, custName, group, needsElec, needsWater, arrival, checkout }) => {
+        const rec = await atPost(COMP_TBL, {
+          [CT.tripId]:    tripData[tripIdx].tripId,
+          [CT.masterRec]: mid,
+          [CT.property]:  property,
+          [CT.custName]:  custName,
+          [CT.channel]:   channel,
+          [CT.arrival]:   arrival || selectedDate,
+          [CT.checkoutDate]: checkout,
+          [CT.needsElec]: needsElec,
+          [CT.needsWater]:needsWater,
+          [CT.group]:     group,
+          [CT.deposit]:       false, [CT.passport]:  false,
+          [CT.electric]:      false, [CT.water]:     false,
+          [CT.depositWaived]: false,
+          [CT.electricNA]:    false, [CT.waterNA]:   false,
+        });
+        if (rec) {
+          tripData[tripIdx].compId   = rec.id;
+          tripData[tripIdx].cf       = rec.fields;
+          tripData[tripIdx].noRecord = false;
+        }
+      }));
+    }
+
     // Create missing records only for today's check-ins
     if (creates.length) {
       await Promise.all(creates.map(async ({ tripIdx, mid, property, channel, custName, group, needsElec, needsWater }) => {
@@ -504,6 +629,7 @@ async function loadData() {
           [CT.custName]:  custName,
           [CT.channel]:   channel,
           [CT.arrival]:   selectedDate,
+          [CT.checkoutDate]: tripData[tripIdx].checkout || null,
           [CT.needsElec]: needsElec,
           [CT.needsWater]:needsWater,
           [CT.group]:     group,
@@ -535,13 +661,20 @@ async function loadData() {
 // RENDER
 // ═══════════════════════════════════════
 function renderCards() {
-  if (!tripData.length) {
-    document.getElementById('cardsGrid').innerHTML =
-      '<div class="state-box"><span class="state-icon">🌴</span><h3>No Phuket check-ins for this date</h3></div>';
-    return;
-  }
-  document.getElementById('cardsGrid').innerHTML =
-    `<div class="cards-grid">${tripData.map((t,i) => cardHTML(t,i)).join('')}</div>`;
+  const ins  = tripData.map((t,i)=>({t,i})).filter(x => x.t.mode !== 'out');
+  const outs = tripData.map((t,i)=>({t,i})).filter(x => x.t.mode === 'out');
+  const emptyIn  = prevMode ? 'No incomplete check-in protocols 🎉' : 'No Phuket check-ins for this date 🌴';
+  const emptyOut = prevMode ? 'No incomplete check-out protocols 🎉' : 'No Phuket check-outs for this date 🌴';
+  let html = '';
+  html += `<h2 class="section-head sh-in">🏠 Check-ins${prevMode?' — Pending':''} <span style="font-size:13px;font-weight:600;color:var(--gray-500)">(${ins.length})</span></h2>`;
+  html += ins.length
+    ? `<div class="cards-grid">${ins.map(x => cardHTML(x.t, x.i)).join('')}</div>`
+    : `<div class="section-empty">${emptyIn}</div>`;
+  html += `<h2 class="section-head sh-out">🧳 Check-outs${prevMode?' — Pending':''} <span style="font-size:13px;font-weight:600;color:var(--gray-500)">(${outs.length})</span></h2>`;
+  html += outs.length
+    ? `<div class="cards-grid">${outs.map(x => cardHTML(x.t, x.i)).join('')}</div>`
+    : `<div class="section-empty">${emptyOut}</div>`;
+  document.getElementById('cardsGrid').innerHTML = html;
 }
 
 function cardHTML(trip, idx) {
@@ -558,9 +691,13 @@ function cardHTML(trip, idx) {
   const chBadge = channelBadge(trip.channel);
   const coBadge = trip.contact ? `<span class="badge badge-teal">💬 ${esc(trip.contact)}</span>` : '';
 
+  const isOut = trip.mode === 'out';
   return `
-<div class="trip-card ${cls}" id="card-${idx}">
+<div class="trip-card ${isOut?'card-out ':''}${cls}" id="card-${idx}">
   <div class="card-topbar">
+
+    <!-- Row 0: mode chip -->
+    <div style="margin-bottom:6px"><span class="mode-chip ${isOut?'chip-out':'chip-in'}">${isOut?'🧳 Check-out':'🏠 Check-in'}</span></div>
 
     <!-- Row 1: Property + status -->
     <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:6px">
@@ -627,16 +764,127 @@ function taskRowHTML(idx, t) {
   ${t.done && t.timeVal && !t.isNA ? `<span class="task-time">${fmtTime(t.timeVal)}</span>` : ''}
   ${t.done && !t.isNA ? '<span class="lock-icon">🔒</span>' : ''}
   ${naBtn}
+</div>${meterBlockHTML(idx, t)}`;
+}
+
+// Meter input blocks rendered under electric/water tasks
+function meterBlockHTML(idx, t) {
+  if (t.isNA) return '';
+  const trip = tripData[idx];
+  const cf   = trip.cf;
+
+  // Check-in: single "Meter start number" input, gates the checkbox
+  if (t.meter) {
+    const val = cf[t.meter.field];
+    return `
+<div class="meter-block" onclick="event.stopPropagation()">
+  <label>🔢 Meter start number</label>
+  <input type="number" step="any" inputmode="decimal" id="mstart-${idx}-${t.key}"
+    value="${val ?? ''}" ${t.done ? 'disabled' : ''}
+    placeholder="Enter meter start number"
+    onchange="saveMeterField(${idx}, '${t.meter.field}', this.value)" />
 </div>`;
+  }
+
+  // Check-out: start (pre-filled) + end + Calculate button + charges
+  if (t.calc) {
+    const start   = cf[t.calc.startField];
+    const end     = cf[t.calc.endField];
+    const charges = cf[t.calc.chargeField];
+    const startLocked = (start !== undefined && start !== null && start !== '') || t.done;
+    return `
+<div class="meter-block" onclick="event.stopPropagation()">
+  <div class="meter-grid">
+    <div>
+      <label>Meter start number</label>
+      <input type="number" step="any" inputmode="decimal" id="cstart-${idx}-${t.key}"
+        value="${start ?? ''}" ${startLocked ? 'disabled' : ''}
+        placeholder="From check-in"
+        onchange="saveMeterField(${idx}, '${t.calc.startField}', this.value)" />
+    </div>
+    <div>
+      <label>Meter end number</label>
+      <input type="number" step="any" inputmode="decimal" id="cend-${idx}-${t.key}"
+        value="${end ?? ''}" ${t.done ? 'disabled' : ''}
+        placeholder="Enter meter end number" />
+    </div>
+  </div>
+  <button class="btn btn-teal btn-sm calc-btn" ${t.done ? 'disabled' : ''}
+    onclick="event.stopPropagation();calcCharges(${idx}, '${t.key}')">🧮 Calculate ${t.calc.word} charges</button>
+  ${charges !== undefined && charges !== null ? `<div class="charge-amt">💰 ${t.calc.word.charAt(0).toUpperCase()+t.calc.word.slice(1)} charges: ฿${Number(charges).toLocaleString()}</div>` : ''}
+</div>`;
+  }
+  return '';
+}
+
+// Save a meter reading field (on blur / change)
+async function saveMeterField(idx, fieldId, value) {
+  const trip = tripData[idx];
+  if (!trip?.compId) { toast('No completion record — try refreshing', 'err'); return; }
+  const num = value === '' ? null : Number(value);
+  if (num !== null && isNaN(num)) { toast('Enter a valid number', 'err'); return; }
+  try {
+    await atPatch(COMP_TBL, trip.compId, { [fieldId]: num });
+    trip.cf[fieldId] = num;
+    toast('💾 Meter reading saved', 'ok');
+  } catch(e) { toast('Failed to save reading: ' + e.message, 'err'); }
+}
+
+// Calculate charges: (end − start) × rate, saved to Airtable
+async function calcCharges(idx, key) {
+  const trip = tripData[idx];
+  if (!trip?.compId) { toast('No completion record — try refreshing', 'err'); return; }
+  const t = taskList(trip).find(x => x.key === key);
+  if (!t?.calc) return;
+
+  const endInput = document.getElementById(`cend-${idx}-${key}`);
+  const startInput = document.getElementById(`cstart-${idx}-${key}`);
+  const start = startInput && !startInput.disabled && startInput.value !== '' ? Number(startInput.value) : Number(trip.cf[t.calc.startField]);
+  const end   = endInput && endInput.value !== '' ? Number(endInput.value) : Number(trip.cf[t.calc.endField]);
+
+  if (isNaN(start) || trip.cf[t.calc.startField] === undefined && (!startInput || startInput.value === '')) {
+    toast('⚠️ Meter start number is missing — enter it first', 'err'); return;
+  }
+  if (isNaN(end) || !endInput || endInput.value === '') {
+    toast('⚠️ Enter the meter end number first', 'err'); return;
+  }
+  if (end < start) { toast('⚠️ Meter end cannot be lower than meter start', 'err'); return; }
+
+  const charges = Math.round((end - start) * t.calc.rate * 100) / 100;
+  try {
+    await atPatch(COMP_TBL, trip.compId, {
+      [t.calc.startField]: start,
+      [t.calc.endField]:   end,
+      [t.calc.chargeField]: charges,
+    });
+    trip.cf[t.calc.startField]  = start;
+    trip.cf[t.calc.endField]    = end;
+    trip.cf[t.calc.chargeField] = charges;
+    refreshCard(idx);
+    toast(`💰 ${t.calc.word.charAt(0).toUpperCase()+t.calc.word.slice(1)} charges: ฿${charges.toLocaleString()} (${end} − ${start}) × ${t.calc.rate}`, 'ok');
+  } catch(e) { toast('Failed to calculate: ' + e.message, 'err'); }
 }
 
 function taskList(trip) {
   const cf = trip.cf;
+  if (trip.mode === 'out') {
+    // ── CHECK-OUT protocol ──
+    return [
+      { key:'depositRet', label:'💵 Deposit Returned',    fieldId:CT.depositRet,      atFieldId:CT.depositRetAt,  done:!!cf[CT.depositRet],      timeVal:cf[CT.depositRetAt],  show:true,            hasNA:true, isNA:!!cf[CT.depositWaived], naFieldId:CT.depositWaived, naLabel:'No Deposit' },
+      { key:'elecCharge', label:'⚡ Electricity Charges', fieldId:CT.elecChargeDone,  atFieldId:CT.elecChargeAt,  done:!!cf[CT.elecChargeDone],  timeVal:cf[CT.elecChargeAt],  show:trip.needsElec,  hasNA:true, isNA:!!cf[CT.electricNA],    naFieldId:CT.electricNA,    naLabel:'N/A',
+        calc:{ startField:CT.elecStart, endField:CT.elecEnd, chargeField:CT.elecCharges, rate:RATE_ELEC, word:'electricity' } },
+      { key:'waterCharge', label:'💧 Water Charges',      fieldId:CT.waterChargeDone, atFieldId:CT.waterChargeAt, done:!!cf[CT.waterChargeDone], timeVal:cf[CT.waterChargeAt], show:trip.needsWater, hasNA:true, isNA:!!cf[CT.waterNA],       naFieldId:CT.waterNA,       naLabel:'N/A',
+        calc:{ startField:CT.waterStart, endField:CT.waterEnd, chargeField:CT.waterCharges, rate:RATE_WATER, word:'water' } },
+    ].filter(t => t.show);
+  }
+  // ── CHECK-IN protocol ──
   return [
     { key:'deposit',  label:'💵 Deposit Collected',      fieldId:CT.deposit,   atFieldId:CT.depositAt,  done:!!cf[CT.deposit],  timeVal:cf[CT.depositAt],  show:true,             hasNA:true,  isNA:!!cf[CT.depositWaived],  naFieldId:CT.depositWaived, naLabel:'No Deposit' },
     { key:'passport', label:'🛂 Passport Photo Taken',   fieldId:CT.passport,  atFieldId:CT.passportAt, done:!!cf[CT.passport], timeVal:cf[CT.passportAt], show:true,             hasNA:false, isNA:false,                   naFieldId:null,             naLabel:'' },
-    { key:'electric', label:'⚡ Electric Meter Reading', fieldId:CT.electric,  atFieldId:CT.electricAt, done:!!cf[CT.electric], timeVal:cf[CT.electricAt], show:trip.needsElec,   hasNA:true,  isNA:!!cf[CT.electricNA],     naFieldId:CT.electricNA,    naLabel:'N/A' },
-    { key:'water',    label:'💧 Water Meter Reading',    fieldId:CT.water,     atFieldId:CT.waterAt,    done:!!cf[CT.water],    timeVal:cf[CT.waterAt],    show:trip.needsWater,  hasNA:true,  isNA:!!cf[CT.waterNA],        naFieldId:CT.waterNA,       naLabel:'N/A' },
+    { key:'electric', label:'⚡ Electric Meter Reading', fieldId:CT.electric,  atFieldId:CT.electricAt, done:!!cf[CT.electric], timeVal:cf[CT.electricAt], show:trip.needsElec,   hasNA:true,  isNA:!!cf[CT.electricNA],     naFieldId:CT.electricNA,    naLabel:'N/A',
+      meter:{ field:CT.elecStart } },
+    { key:'water',    label:'💧 Water Meter Reading',    fieldId:CT.water,     atFieldId:CT.waterAt,    done:!!cf[CT.water],    timeVal:cf[CT.waterAt],    show:trip.needsWater,  hasNA:true,  isNA:!!cf[CT.waterNA],        naFieldId:CT.waterNA,       naLabel:'N/A',
+      meter:{ field:CT.waterStart } },
   ].filter(t => t.show);
 }
 
@@ -663,6 +911,32 @@ function esc(s) {
 // ═══════════════════════════════════════
 function onTaskClick(idx, key, fieldId, atFieldId, currentDone, currentNA) {
   if (currentNA) return; // N/A tasks can only be changed via the N/A button
+
+  // ── Gating rules before ticking ──
+  if (!currentDone) {
+    const trip = tripData[idx];
+    const t = taskList(trip).find(x => x.key === key);
+    // Check-in meter tasks: require the meter start number first
+    if (t?.meter) {
+      const inputEl = document.getElementById(`mstart-${idx}-${key}`);
+      const val = inputEl && inputEl.value !== '' ? inputEl.value : trip.cf[t.meter.field];
+      if (val === undefined || val === null || val === '') {
+        toast('⚠️ Enter the meter start number before ticking this box', 'err');
+        return;
+      }
+      // Persist the reading together with the tick (in case blur didn't fire)
+      trip.cf[t.meter.field] = Number(val);
+    }
+    // Check-out charge tasks: require charges to be calculated first
+    if (t?.calc) {
+      const charges = trip.cf[t.calc.chargeField];
+      if (charges === undefined || charges === null) {
+        toast(`⚠️ Calculate the ${t.calc.word} charges before ticking this box`, 'err');
+        return;
+      }
+    }
+  }
+
   if (currentDone) {
     pendingUncheck = { idx, key, fieldId, atFieldId };
     document.getElementById('adminPass').value = '';
@@ -688,17 +962,44 @@ async function doCheck(idx, key, fieldId, atFieldId, name) {
   markSaving(idx, key, true);
   try {
     const now = new Date().toISOString();
-    await atPatch(COMP_TBL, trip.compId, {
-      [fieldId]: true, [atFieldId]: now, [CT.doneBy]: name || 'Team',
-    });
+    const patch = { [fieldId]: true, [atFieldId]: now, [CT.doneBy]: name || 'Team' };
+    // Persist meter start reading together with the tick
+    const t = taskList(trip).find(x => x.key === key);
+    if (t?.meter && trip.cf[t.meter.field] !== undefined && trip.cf[t.meter.field] !== null) {
+      patch[t.meter.field] = Number(trip.cf[t.meter.field]);
+    }
+    await atPatch(COMP_TBL, trip.compId, patch);
     trip.cf[fieldId] = true;
     trip.cf[atFieldId] = now;
     refreshCard(idx);
     updateSummary();
     toast('✅ Marked complete!', 'ok');
+    maybeNotifyComplete(idx);
   } catch(e) {
     toast('Failed to save: ' + e.message, 'err');
   } finally { markSaving(idx, key, false); }
+}
+
+// ── Auto Telegram notification when a card reaches 100% ──
+async function maybeNotifyComplete(idx) {
+  const trip  = tripData[idx];
+  const tasks = taskList(trip);
+  if (!tasks.length || !tasks.every(t => isResolved(t))) return;
+  if (trip._notified) return;   // avoid double-sends in this session
+  trip._notified = true;
+
+  const tName = trip.tripName || trip.tripId || trip.property || 'Trip';
+  let msg;
+  if (trip.mode === 'out') {
+    msg = `🎉 <b>Great!! All protocols related to the trip "${esc(tName)}" is completed</b>`;
+  } else {
+    msg = `🎉 <b>Good job! You have completed all check in protocols</b>\n\n`
+        + `✈️ Trip: <b>${esc(tName)}</b>\n`
+        + `👤 Customer: ${esc(trip.custName || '—')}\n`
+        + `📅 Check-in: ${trip.arrival ? fmtDate(trip.arrival) : '—'}  |  Check-out: ${trip.checkout ? fmtDate(trip.checkout) : '—'}`;
+  }
+  const ok = await tgSend(DPEW_CHAT, msg);
+  toast(ok ? '📨 Completion notice sent to DPEW!' : '❌ Completion notice failed to send', ok ? 'ok' : 'err');
 }
 
 async function doUncheck(idx, key, fieldId, atFieldId) {
@@ -779,6 +1080,7 @@ async function onNAClick(idx, key, naFieldId, currentNA) {
     refreshCard(idx);
     updateSummary();
     toast('Marked as Not Applicable', 'info');
+    maybeNotifyComplete(idx);
   } catch(e) {
     toast('Failed: ' + e.message, 'err');
   } finally { markSaving(idx, key, false); }
@@ -818,7 +1120,7 @@ function refreshCard(idx) {
 
   const card = document.getElementById(`card-${idx}`);
   if (!card) return;
-  card.className = `trip-card ${allDone?'card-done':anyDone?'card-partial':'card-pending'}`;
+  card.className = `trip-card ${trip.mode==='out'?'card-out ':''}${allDone?'card-done':anyDone?'card-partial':'card-pending'}`;
   card.querySelector('.card-status-dot').style.background =
     allDone ? 'var(--success)' : anyDone ? 'var(--gold)' : 'var(--danger)';
   card.querySelector('[style*="font-size:22px"]').textContent =
@@ -857,10 +1159,155 @@ function updateSummary() {
 // DATE PICKER
 // ═══════════════════════════════════════
 function onDateChange() {
+  if (prevMode) exitPrevMode();
   selectedDate = document.getElementById('datePicker').value || todayBKK();
   document.getElementById('pillDate').textContent =
     selectedDate === todayBKK() ? 'Today — ' + fmtDate(selectedDate) : fmtDate(selectedDate);
   loadData();
+}
+
+// ═══════════════════════════════════════
+// PREVIOUS TRIPS (incomplete only)
+// ═══════════════════════════════════════
+function exitPrevMode() {
+  prevMode = false;
+  const btn = document.getElementById('prevBtn');
+  btn.textContent = '🗂️ Previous Trips';
+  btn.classList.remove('btn-orange'); btn.classList.add('btn-outline');
+}
+
+function togglePrevTrips() {
+  if (prevMode) {
+    exitPrevMode();
+    selectedDate = todayBKK();
+    document.getElementById('datePicker').value = selectedDate;
+    document.getElementById('pillDate').textContent = 'Today — ' + fmtDate(selectedDate);
+    loadData();
+    return;
+  }
+  prevMode = true;
+  const btn = document.getElementById('prevBtn');
+  btn.textContent = '📅 Back to Today';
+  btn.classList.remove('btn-outline'); btn.classList.add('btn-orange');
+  document.getElementById('pillDate').textContent = 'Previous Trips — Incomplete Tasks';
+  loadPrevTrips();
+}
+
+async function loadPrevTrips() {
+  document.getElementById('cardsGrid').innerHTML =
+    '<div class="state-box"><span class="state-icon spin">⏳</span><h3>Loading previous incomplete trips…</h3></div>';
+  setSummary('—','—','—','—');
+
+  try {
+    const today  = todayBKK();
+    const cutoff = new Date(Date.now() - 90*24*3600*1000).toLocaleDateString('en-CA', { timeZone: TZ });
+
+    // 1) Past check-ins with incomplete tasks (from completion records)
+    const inFormula = `AND(IS_BEFORE({Arrival Date}, DATETIME_PARSE('${today}')), IS_AFTER({Arrival Date}, DATETIME_PARSE('${cutoff}')))`;
+    // 2) Past check-outs (from Master Trips) — completion records matched below
+    const outFormula = `AND(IS_BEFORE({Checkout Date}, DATETIME_PARSE('${today}')), IS_AFTER({Checkout Date}, DATETIME_PARSE('${cutoff}')), FIND('Phuket', {City}), OR({Inquiry status}='Checked-In', {Inquiry status}='Trip completed'))`;
+
+    const [rawComps, rawOuts] = await Promise.all([
+      atGet(COMP_TBL, inFormula),
+      atGet(MASTER_TBL, outFormula, Object.values(MT))
+    ]);
+
+    // Completion records for past check-outs (chunked OR queries)
+    const outCompByMid = {};
+    for (let i = 0; i < rawOuts.length; i += 40) {
+      const chunk = rawOuts.slice(i, i + 40);
+      const comps = await atGet(COMP_TBL, `OR(${chunk.map(r => `{Master Trip Record ID}='${r.id}'`).join(',')})`);
+      comps.forEach(r => {
+        const mid = r.fields[CT.masterRec];
+        if (!mid) return;
+        const existing = outCompByMid[mid];
+        const hasData = r.fields[CT.property] || r.fields[CT.custName];
+        if (!existing || (hasData && !(existing.fields[CT.property] || existing.fields[CT.custName]))) {
+          outCompByMid[mid] = r;
+        }
+      });
+    }
+
+    tripData = [];
+
+    // ── Pending check-ins ──
+    rawComps.forEach(r => {
+      const cf = r.fields;
+      const property = cf[CT.property] || '';
+      const custName = cf[CT.custName] || '';
+      if (!property && !custName) return;   // skip blank auto-generated records
+
+      const trip = {
+        mode: 'in',
+        masterRecId: cf[CT.masterRec] || null,
+        tripId:   cf[CT.tripId] || '',
+        tripName: cf[CT.tripId] || '',
+        property, custName,
+        channel:  cf[CT.channel] || '',
+        contact:  '',
+        group:    (cf[CT.group] || '—') + '  •  📅 ' + fmtDate(cf[CT.arrival] || today),
+        needsElec:  !!cf[CT.needsElec],
+        needsWater: !!cf[CT.needsWater],
+        compId: r.id,
+        cf,
+        noRecord: false,
+        arrival:  cf[CT.arrival] || '',
+        checkout: cf[CT.checkoutDate] || '',
+      };
+
+      const tasks = taskList(trip);
+      if (!tasks.length || tasks.every(t => isResolved(t))) return;   // keep incomplete only
+      tripData.push(trip);
+    });
+
+    // ── Pending check-outs ──
+    rawOuts.forEach(raw => {
+      const f = raw.fields;
+      const comp = outCompByMid[raw.id];
+      if (!comp) return;   // no check-in record was ever tracked — skip
+      const property = f[MT.property] || '';
+      const channel  = typeof f[MT.channel] === 'object' ? (f[MT.channel]?.name || '') : (f[MT.channel] || '');
+      const custName = extractName(f[MT.custName]);
+      const { needsElec, needsWater } = rules(property, channel);
+
+      const trip = {
+        mode: 'out',
+        masterRecId: raw.id,
+        tripId:   f[MT.tripId] || '',
+        tripName: f[MT.tripName] || '',
+        property, custName, channel,
+        contact:  extractName(f[MT.contact]),
+        group:    (f[MT.group] || '—') + '  •  🧳 ' + fmtDate(f[MT.checkout] || today),
+        needsElec, needsWater,
+        compId: comp.id,
+        cf:     comp.fields,
+        noRecord: false,
+        arrival:  f[MT.arrival]  || '',
+        checkout: f[MT.checkout] || '',
+      };
+
+      const tasks = taskList(trip);
+      if (!tasks.length || tasks.every(t => isResolved(t))) return;   // keep incomplete only
+      tripData.push(trip);
+    });
+
+    tripData.sort((a,b) => ((b.mode==='out'?b.checkout:b.arrival)||'').localeCompare((a.mode==='out'?a.checkout:a.arrival)||''));
+
+    if (!tripData.length) {
+      document.getElementById('cardsGrid').innerHTML =
+        '<div class="state-box"><span class="state-icon">🎉</span><h3>All previous trips are complete!</h3><p style="color:var(--gray-500);font-size:13px;margin-top:6px">No incomplete check-in or check-out tasks in the last 90 days.</p></div>';
+      setSummary(0,0,0,0);
+      return;
+    }
+    renderCards();
+    updateSummary();
+
+  } catch(e) {
+    document.getElementById('cardsGrid').innerHTML =
+      `<div class="state-box"><span class="state-icon">❌</span><h3>Error loading previous trips</h3>
+       <p style="color:var(--danger);font-size:13px;margin-top:6px">${e.message}</p>
+       <button class="btn btn-orange" style="margin-top:18px" onclick="loadPrevTrips()">Try Again</button></div>`;
+  }
 }
 
 // ═══════════════════════════════════════
@@ -901,7 +1348,7 @@ async function sendTripUpdate(idx) {
   const resolved = tasks.filter(t => isResolved(t)).length;
   const allDone  = resolved === tasks.length;
 
-  let msg = `${allDone?'✅':'⚠️'} <b>${esc(trip.property)} — Check-in Update</b>\n\n`;
+  let msg = `${allDone?'✅':'⚠️'} <b>${esc(trip.property)} — ${trip.mode==='out'?'Check-out':'Check-in'} Update</b>\n\n`;
   msg += `👤 ${trip.custName}  |  ${trip.channel}`;
   if (trip.contact) msg += `  |  💬 ${trip.contact}`;
   msg += `\n\n<b>Protocol Status (${resolved}/${tasks.length}):</b>\n`;
@@ -965,7 +1412,7 @@ function toast(msg, type='info') {
   tickClock();
   setInterval(tickClock, 30000);
   loadData();
-  refreshTimer = setInterval(loadData, 5 * 60 * 1000);
+  refreshTimer = setInterval(() => prevMode ? loadPrevTrips() : loadData(), 5 * 60 * 1000);
 })();
 </script>
 </body>
