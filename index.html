@@ -139,6 +139,12 @@ body{font-family:'Inter',sans-serif;background:var(--cream);color:var(--brown);m
 .meter-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:8px;}
 .calc-btn{width:100%;justify-content:center;margin-top:2px;}
 .charge-amt{margin-top:8px;font-size:14px;font-weight:800;color:var(--teal-dk);text-align:center;}
+/* ── Card comment box ── */
+.note-wrap{margin-top:10px;padding:10px 12px;background:#FFFBEF;border:1px dashed var(--gold);border-radius:9px;}
+.note-wrap label{display:block;font-size:11px;font-weight:800;color:var(--gray-700);margin-bottom:5px;}
+.note-wrap textarea{width:100%;box-sizing:border-box;min-height:52px;resize:vertical;padding:8px 10px;border:1.5px solid var(--gray-200);border-radius:8px;font-size:12.5px;font-family:inherit;line-height:1.45;}
+.note-actions{display:flex;align-items:center;gap:10px;margin-top:6px;}
+.note-saved{font-size:11px;color:var(--success);font-weight:700;}
 .na-btn.na-active{background:#F3F4F6;border-color:#9CA3AF;color:#374151;font-style:italic;}
 .na-label{font-size:11px;color:var(--gray-500);font-style:italic;margin-left:4px;}
 
@@ -334,6 +340,7 @@ const CT = {
   waterNA:    'fldhijaiQ5NTUs4UU',
   doneBy:     'fldIzoPJxrHYpy8dP',
   group:      'fldOMNlOpUbTfoAwW',
+  notes:      'fldoTudQrPX8Caz9d',
   // ── Meter readings & check-out protocol ──
   elecStart:      'fldXGKtMnumXtfZjr',
   waterStart:     'fldFVzTgJ6I9punJ8',
@@ -733,6 +740,14 @@ function cardHTML(trip, idx) {
         <div class="prog-bar ${pbCls}" id="prog-${idx}" style="width:${pct}%"></div>
       </div>
     </div>
+    <div class="note-wrap" onclick="event.stopPropagation()">
+      <label>💬 Comment / reason (visible to supervisor in reminders & escalation)</label>
+      <textarea id="note-${idx}" placeholder="e.g. Guest arriving late at 11 PM — deposit will be collected on arrival">${esc(trip.cf[CT.notes] || '')}</textarea>
+      <div class="note-actions">
+        <button class="btn btn-outline btn-sm" onclick="saveNote(${idx})">💾 Save Comment</button>
+        <span class="note-saved" id="notesaved-${idx}"></span>
+      </div>
+    </div>
   </div>
 
   <div class="card-foot" id="foot-${idx}">
@@ -740,6 +755,24 @@ function cardHTML(trip, idx) {
     ${allDone ? '<span class="done-tag">✅ All tasks done!</span>' : ''}
   </div>
 </div>`;
+}
+
+// ── Save the card comment to Airtable ──
+async function saveNote(idx) {
+  const trip = tripData[idx];
+  if (!trip?.compId) { toast('No completion record — try refreshing', 'err'); return; }
+  const ta = document.getElementById(`note-${idx}`);
+  const text = (ta?.value || '').trim();
+  try {
+    const name = localStorage.getItem('ms_name');
+    const stamped = text ? (name ? `${text} — ${name}` : text) : '';
+    await atPatch(COMP_TBL, trip.compId, { [CT.notes]: stamped || null });
+    trip.cf[CT.notes] = stamped;
+    if (ta && stamped !== text) ta.value = stamped;
+    const tag = document.getElementById(`notesaved-${idx}`);
+    if (tag) { tag.textContent = '✓ Saved'; setTimeout(() => { tag.textContent = ''; }, 2500); }
+    toast('💬 Comment saved', 'ok');
+  } catch(e) { toast('Failed to save comment: ' + e.message, 'err'); }
 }
 
 function taskRowHTML(idx, t) {
@@ -1364,6 +1397,8 @@ async function sendTripUpdate(idx) {
       msg += `${t.done?'✅':'☐'} ${t.label}${t.done&&t.timeVal?' ['+fmtTime(t.timeVal)+']':''}\n`;
     }
   });
+  const noteText = (document.getElementById(`note-${idx}`)?.value || trip.cf[CT.notes] || '').trim();
+  if (noteText) msg += `\n💬 <b>Note:</b> <i>${esc(noteText)}</i>\n`;
   if (!allDone) msg += `\n⚠️ <b>Pending items need attention!</b>`;
 
   const ok = await tgSend(DPEW_CHAT, msg);
