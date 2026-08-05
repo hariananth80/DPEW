@@ -1234,7 +1234,7 @@ async function loadPrevTrips() {
 
   try {
     const today  = todayBKK();
-    const cutoff = new Date(Date.now() - 90*24*3600*1000).toLocaleDateString('en-CA', { timeZone: TZ });
+    const cutoff = new Date(Date.now() - 7*24*3600*1000).toLocaleDateString('en-CA', { timeZone: TZ });
 
     // 1) Past check-ins with incomplete tasks (from completion records)
     const inFormula = `AND(IS_BEFORE({Arrival Date}, DATETIME_PARSE('${today}')), IS_AFTER({Arrival Date}, DATETIME_PARSE('${cutoff}')))`;
@@ -1347,7 +1347,7 @@ async function loadPrevTrips() {
 
     if (!tripData.length) {
       document.getElementById('cardsGrid').innerHTML =
-        '<div class="state-box"><span class="state-icon">🎉</span><h3>All previous trips are complete!</h3><p style="color:var(--gray-500);font-size:13px;margin-top:6px">No incomplete check-in or check-out tasks in the last 90 days.</p></div>';
+        '<div class="state-box"><span class="state-icon">🎉</span><h3>All previous trips are complete!</h3><p style="color:var(--gray-500);font-size:13px;margin-top:6px">No incomplete check-in or check-out tasks in the last 7 days.</p></div>';
       setSummary(0,0,0,0);
       return;
     }
