@@ -315,6 +315,7 @@ const MT = {
   group:    'fldAnwCUUCiV32DCE',
   contact:  'fldw9vgDW7PsIudZo',   // Contact Channel (from CRM contact) — multipleLookupValues
   checkout: 'fldiQISqiSkO45tvn',   // Checkout Date
+  status:   'fldxU0AyJl5bkeDg2',   // Inquiry status
 };
 
 // Completions field IDs
@@ -1264,6 +1265,7 @@ async function loadPrevTrips() {
     tripData = [];
 
     // ── Pending check-ins ──
+    const inCands = [];
     rawComps.forEach(r => {
       const cf = r.fields;
       const property = cf[CT.property] || '';
@@ -1290,6 +1292,23 @@ async function loadPrevTrips() {
 
       const tasks = taskList(trip);
       if (!tasks.length || tasks.every(t => isResolved(t))) return;   // keep incomplete only
+      inCands.push(trip);
+    });
+
+    // Hide check-ins whose trip has since been cancelled in Master Trips
+    const candIds = [...new Set(inCands.map(t => t.masterRecId).filter(Boolean))];
+    const statusById = {};
+    for (let i = 0; i < candIds.length; i += 40) {
+      const chunk = candIds.slice(i, i + 40);
+      const recs = await atGet(MASTER_TBL, `OR(${chunk.map(id => `RECORD_ID()='${id}'`).join(',')})`, [MT.status]);
+      recs.forEach(r => {
+        const raw = r.fields[MT.status];
+        statusById[r.id] = typeof raw === 'object' ? (raw?.name || '') : (raw || '');
+      });
+    }
+    inCands.forEach(trip => {
+      const st = trip.masterRecId ? (statusById[trip.masterRecId] || '') : '';
+      if (st === 'Trip cancelled') return;   // trip was cancelled — do not show
       tripData.push(trip);
     });
 
