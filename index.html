@@ -1,0 +1,1798 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>MonthStayz — Check-in Protocol Dashboard</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Inter:wght@400;500;600;700;800&display=swap');
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --orange:#E8722A;--orange-lt:#FEF0E7;--orange-dk:#C45E1A;
+  --gold:#F4A024;
+  --teal:#3BBFB0;--teal-lt:#E0F7F5;--teal-dk:#2A9A8C;
+  --brown:#2C1810;--brown-lt:#5C3828;
+  --cream:#FFF8EE;--white:#FFFFFF;
+  --gray-50:#F9F7F4;--gray-100:#F0EDE8;--gray-200:#E2DDD6;
+  --gray-500:#9E968C;--gray-700:#5C5550;
+  --success:#16A34A;--success-lt:#DCFCE7;
+  --danger:#DC2626;--danger-lt:#FEE2E2;
+  --shadow-sm:0 1px 3px rgba(44,24,16,.08);
+  --shadow-md:0 4px 16px rgba(44,24,16,.12);
+  --shadow-lg:0 8px 32px rgba(44,24,16,.16);
+  --radius:14px;
+}
+body{font-family:'Inter',sans-serif;background:var(--cream);color:var(--brown);min-height:100vh;}
+
+/* HEADER */
+.site-header{background:var(--brown);padding:0 28px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:200;box-shadow:0 2px 12px rgba(0,0,0,.25);height:70px;}
+.header-brand{display:flex;align-items:center;gap:14px;}
+.header-logo{height:50px;width:50px;border-radius:50%;object-fit:cover;border:2px solid var(--gold);background:var(--brown-lt);}
+.header-logo-fallback{height:50px;width:50px;border-radius:50%;background:linear-gradient(135deg,var(--orange),var(--gold));display:flex;align-items:center;justify-content:center;font-size:22px;border:2px solid var(--gold);flex-shrink:0;}
+.header-title h1{font-family:'Playfair Display',serif;font-size:18px;color:var(--white);line-height:1.2;}
+.header-title p{font-size:11px;color:var(--gold);letter-spacing:.5px;text-transform:uppercase;}
+.header-right{display:flex;align-items:center;gap:10px;}
+.header-date{font-size:12px;color:rgba(255,255,255,.6);text-align:right;line-height:1.5;}
+.header-date strong{color:var(--gold);display:block;font-size:13px;}
+
+/* BUTTONS */
+.btn{display:inline-flex;align-items:center;gap:6px;padding:9px 18px;border-radius:9px;font-size:13px;font-weight:600;cursor:pointer;border:none;transition:all .18s;white-space:nowrap;}
+.btn:disabled{opacity:.55;cursor:not-allowed;}
+.btn-orange{background:var(--orange);color:#fff;}
+.btn-orange:hover:not(:disabled){background:var(--orange-dk);}
+.btn-teal{background:var(--teal);color:#fff;}
+.btn-teal:hover:not(:disabled){background:var(--teal-dk);}
+.btn-outline{background:transparent;border:1.5px solid var(--gray-200);color:var(--gray-700);}
+.btn-outline:hover{background:var(--gray-100);}
+.btn-sm{padding:6px 12px;font-size:12px;}
+.btn-ghost{background:rgba(255,255,255,.12);color:#fff;border:1.5px solid rgba(255,255,255,.2);}
+.btn-ghost:hover{background:rgba(255,255,255,.22);}
+
+/* MAIN */
+.main{padding:24px 28px;max-width:1320px;margin:0 auto;}
+.action-bar{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:20px;}
+.action-bar-left{display:flex;gap:10px;flex-wrap:wrap;align-items:center;}
+
+/* SUMMARY */
+.summary-strip{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:24px;}
+@media(max-width:700px){.summary-strip{grid-template-columns:repeat(2,1fr);}}
+.stat-card{background:var(--white);border-radius:var(--radius);padding:16px 18px;border:1.5px solid var(--gray-100);box-shadow:var(--shadow-sm);}
+.stat-card .num{font-size:32px;font-weight:800;line-height:1;}
+.stat-card .lbl{font-size:11px;color:var(--gray-500);margin-top:4px;font-weight:600;text-transform:uppercase;letter-spacing:.4px;}
+.num-orange{color:var(--orange);}
+.num-teal{color:var(--teal-dk);}
+.num-green{color:var(--success);}
+.num-red{color:var(--danger);}
+.date-pill{display:flex;align-items:center;gap:8px;background:var(--white);border:1.5px solid var(--gray-200);border-radius:99px;padding:6px 16px;font-size:13px;font-weight:600;}
+
+/* CARDS */
+.cards-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(380px,1fr));gap:18px;}
+@media(max-width:420px){.cards-grid{grid-template-columns:1fr;}}
+.trip-card{background:var(--white);border-radius:var(--radius);border:1.5px solid var(--gray-100);box-shadow:var(--shadow-sm);overflow:hidden;transition:box-shadow .2s,transform .2s;}
+.trip-card:hover{box-shadow:var(--shadow-md);transform:translateY(-2px);}
+.trip-card.card-done   {border-left:5px solid var(--success);}
+.trip-card.card-partial{border-left:5px solid var(--gold);}
+.trip-card.card-pending{border-left:5px solid var(--danger);}
+
+/* Card topbar */
+.card-topbar{padding:16px 18px 12px;border-bottom:1px solid var(--gray-100);background:var(--gray-50);}
+.card-prop{font-size:20px;font-weight:800;color:var(--brown);line-height:1.2;}
+.card-tripname{font-size:11px;color:var(--gray-500);margin-top:3px;font-family:monospace;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.card-guest{display:flex;align-items:center;gap:6px;margin-top:6px;font-size:14px;font-weight:700;color:var(--brown);}
+.card-status-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0;background:var(--danger);}
+.card-done .card-status-dot{background:var(--success);}
+.card-partial .card-status-dot{background:var(--gold);}
+
+/* Badges */
+.badges{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;}
+.badge{display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:600;}
+.badge-airbnb  {background:#FFF0F0;color:#CC0000;border:1px solid #FFCCCC;}
+.badge-booking {background:#E8F0FF;color:#003580;border:1px solid #BFCFFF;}
+.badge-direct  {background:#E8FFF4;color:#006633;border:1px solid #99DDBB;}
+.badge-agent   {background:#FFF5E0;color:#7A4F00;border:1px solid #FFDDAA;}
+.badge-cash    {background:#E8FFF4;color:#006633;border:1px solid #99DDBB;}
+.badge-teal    {background:var(--teal-lt);color:var(--teal-dk);border:1px solid var(--teal);}
+.badge-gray    {background:var(--gray-100);color:var(--gray-700);border:1px solid var(--gray-200);}
+
+/* Card body */
+.card-body{padding:14px 18px;}
+.card-group{font-size:11px;color:var(--gray-500);font-family:monospace;background:var(--gray-50);padding:5px 8px;border-radius:6px;margin-bottom:14px;word-break:break-all;line-height:1.4;}
+.card-avatar{width:24px;height:24px;border-radius:50%;background:var(--teal);color:#fff;font-size:10px;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0;letter-spacing:.2px;}
+
+/* Tasks */
+.tasks{display:flex;flex-direction:column;gap:7px;margin-bottom:14px;}
+.task-row{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:10px;background:var(--gray-50);border:1.5px solid transparent;cursor:pointer;transition:all .15s;user-select:none;}
+.task-row:hover{background:var(--gray-100);border-color:var(--gray-200);}
+.task-row.t-done{background:var(--success-lt);border-color:#BBF7D0;}
+.task-row.t-saving{opacity:.6;pointer-events:none;}
+.task-box{width:22px;height:22px;border-radius:7px;border:2px solid var(--gray-200);background:var(--white);display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .18s;}
+.t-done .task-box{background:var(--success);border-color:var(--success);}
+.check-svg{display:none;}
+.t-done .check-svg{display:block;}
+.task-label{flex:1;font-size:13.5px;font-weight:500;color:var(--brown);}
+.t-done .task-label{color:var(--gray-500);text-decoration:line-through;}
+.task-time{font-size:11px;color:var(--gray-500);}
+.lock-icon{font-size:13px;opacity:.5;}
+.task-row.t-na-marked{background:#F3F4F6;border-color:#D1D5DB;}
+.task-row.t-na-marked .task-label{color:var(--gray-500);text-decoration:line-through;}
+.na-btn{
+  margin-left:auto;padding:3px 9px;border-radius:6px;font-size:11px;font-weight:700;
+  cursor:pointer;border:1.5px solid var(--gray-200);background:var(--white);color:var(--gray-500);
+  transition:all .15s;white-space:nowrap;flex-shrink:0;
+}
+.na-btn:hover{background:var(--gray-100);border-color:var(--gray-500);}
+/* ── Check-in / Check-out sections ── */
+.section-head{font-size:19px;font-weight:800;margin:28px 0 14px;padding-left:12px;display:flex;align-items:center;gap:8px;}
+.sh-in{color:var(--orange-dk);border-left:5px solid var(--orange);}
+.sh-out{color:var(--teal-dk);border-left:5px solid var(--teal);}
+.section-empty{background:var(--white);border:1.5px dashed var(--gray-200);border-radius:12px;padding:22px;text-align:center;color:var(--gray-500);font-size:13px;margin-bottom:8px;}
+.trip-card.card-out{background:#F2FBFA;border:1.5px solid var(--teal);}
+.card-out .card-topbar{background:linear-gradient(135deg,#E2F6F3,#F2FBFA);}
+.card-out .card-prop{color:var(--teal-dk);}
+.mode-chip{font-size:10px;font-weight:800;letter-spacing:.5px;padding:3px 8px;border-radius:20px;text-transform:uppercase;}
+.chip-in{background:var(--orange-lt);color:var(--orange-dk);}
+.chip-out{background:#CDEFEA;color:var(--teal-dk);}
+/* ── Meter reading blocks ── */
+.meter-block{margin:4px 0 10px 34px;padding:10px 12px;background:var(--gray-100);border:1px dashed var(--gray-200);border-radius:9px;}
+.meter-block label{display:block;font-size:11px;font-weight:700;color:var(--gray-700);margin-bottom:4px;}
+.meter-block input{width:100%;box-sizing:border-box;padding:7px 10px;border:1.5px solid var(--gray-200);border-radius:8px;font-size:13px;font-family:inherit;}
+.meter-block input:disabled{background:#EDEDED;color:var(--gray-500);}
+.meter-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:8px;}
+.calc-btn{width:100%;justify-content:center;margin-top:2px;}
+.charge-amt{margin-top:8px;font-size:14px;font-weight:800;color:var(--teal-dk);text-align:center;}
+/* ── Card comment box ── */
+.note-wrap{margin-top:10px;padding:10px 12px;background:#FFFBEF;border:1px dashed var(--gold);border-radius:9px;}
+.note-wrap label{display:block;font-size:11px;font-weight:800;color:var(--gray-700);margin-bottom:5px;}
+.note-wrap textarea{width:100%;box-sizing:border-box;min-height:52px;resize:vertical;padding:8px 10px;border:1.5px solid var(--gray-200);border-radius:8px;font-size:12.5px;font-family:inherit;line-height:1.45;}
+.note-actions{display:flex;align-items:center;gap:10px;margin-top:6px;}
+.note-saved{font-size:11px;color:var(--success);font-weight:700;}
+.na-btn.na-active{background:#F3F4F6;border-color:#9CA3AF;color:#374151;font-style:italic;}
+.na-label{font-size:11px;color:var(--gray-500);font-style:italic;margin-left:4px;}
+
+/* ── Customer did-not-respond block ── */
+.noresp-wrap{margin-top:10px;padding:10px 12px;background:var(--gray-50);border:1px dashed var(--gray-200);border-radius:9px;}
+.noresp-row{display:flex;align-items:flex-start;gap:9px;cursor:pointer;user-select:none;}
+.noresp-check{width:18px;height:18px;border-radius:6px;border:1.5px solid var(--gray-500);background:var(--white);flex-shrink:0;margin-top:1px;position:relative;transition:all .15s;}
+.noresp-check.on{background:var(--orange-dk);border-color:var(--orange-dk);}
+.noresp-check.on::after{content:'';position:absolute;left:5px;top:2px;width:5px;height:9px;border:solid #fff;border-width:0 2px 2px 0;transform:rotate(45deg);}
+.noresp-label{font-size:12.5px;font-weight:700;color:var(--brown-lt);}
+.noresp-sub{font-size:10.5px;color:var(--gray-500);margin-top:1px;}
+.noresp-wrap textarea{width:100%;box-sizing:border-box;min-height:40px;resize:vertical;margin-top:8px;padding:7px 9px;border:1.5px solid var(--gray-200);border-radius:8px;font-size:12px;font-family:inherit;line-height:1.4;}
+.noresp-wrap textarea:disabled{background:var(--gray-100);color:var(--gray-500);}
+.capture-help{font-size:11px;color:var(--gray-500);text-align:center;}
+
+/* Progress */
+.prog-wrap{margin-bottom:14px;}
+.prog-meta{display:flex;justify-content:space-between;font-size:12px;color:var(--gray-500);font-weight:600;margin-bottom:5px;}
+.prog-track{height:6px;background:var(--gray-100);border-radius:99px;overflow:hidden;}
+.prog-bar{height:100%;border-radius:99px;transition:width .4s ease;}
+.pb-done{background:var(--success);}
+.pb-partial{background:var(--gold);}
+.pb-zero{background:var(--danger);}
+
+/* Card footer */
+.card-foot{padding:12px 18px;border-top:1px solid var(--gray-100);display:flex;flex-direction:column;align-items:stretch;gap:6px;background:var(--gray-50);}
+.card-foot .btn{width:100%;justify-content:center;}
+.done-tag{font-size:12px;color:var(--success);font-weight:700;text-align:center;}
+
+/* States */
+.state-box{text-align:center;padding:80px 20px;color:var(--gray-500);}
+.state-icon{font-size:52px;margin-bottom:16px;display:block;}
+.state-box h3{font-size:17px;color:var(--gray-700);margin-bottom:6px;}
+.spin{display:inline-block;animation:spin .7s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg);}}
+
+/* Log */
+.log-toggle{margin-top:32px;text-align:center;}
+.log-panel{margin-top:12px;background:var(--white);border-radius:var(--radius);border:1.5px solid var(--gray-200);overflow:hidden;display:none;}
+.log-panel.open{display:block;}
+.log-table{width:100%;border-collapse:collapse;font-size:12px;}
+.log-table th{background:var(--brown);color:#fff;padding:10px 14px;text-align:left;font-weight:600;}
+.log-table td{padding:9px 14px;border-bottom:1px solid var(--gray-100);}
+.log-table tr:last-child td{border:none;}
+.log-table tr:hover td{background:var(--gray-50);}
+.log-ok{color:var(--success);font-weight:600;}
+.log-fail{color:var(--danger);font-weight:600;}
+
+/* Modals */
+.modal-bg{display:none;position:fixed;inset:0;background:rgba(44,24,16,.55);z-index:500;align-items:center;justify-content:center;padding:20px;}
+.modal-bg.open{display:flex;}
+.modal{background:var(--white);border-radius:20px;padding:32px 28px;max-width:420px;width:100%;box-shadow:var(--shadow-lg);}
+.modal h3{font-size:18px;font-weight:800;margin-bottom:6px;color:var(--brown);}
+.modal p{font-size:13px;color:var(--gray-700);margin-bottom:20px;line-height:1.6;}
+.modal-input{width:100%;padding:11px 14px;border:1.5px solid var(--gray-200);border-radius:10px;font-size:15px;color:var(--brown);background:var(--gray-50);margin-bottom:8px;transition:border-color .2s;}
+.modal-input:focus{outline:none;border-color:var(--orange);}
+.modal-err{color:var(--danger);font-size:13px;margin-bottom:12px;min-height:18px;}
+.modal-foot{display:flex;gap:10px;justify-content:flex-end;margin-top:16px;}
+
+/* Toast */
+#toasts{position:fixed;bottom:24px;right:24px;display:flex;flex-direction:column;gap:8px;z-index:999;}
+.toast{padding:12px 18px;border-radius:12px;font-size:13.5px;font-weight:600;max-width:340px;box-shadow:var(--shadow-md);animation:toastIn .3s ease;display:flex;align-items:center;gap:8px;}
+@keyframes toastIn{from{transform:translateY(16px);opacity:0}to{transform:translateY(0);opacity:1}}
+.toast-ok{background:var(--success);color:#fff;}
+.toast-err{background:var(--danger);color:#fff;}
+.toast-info{background:var(--brown);color:#fff;}
+.toast-warn{background:var(--orange);color:#fff;}
+</style>
+</head>
+<body>
+
+<div id="toasts"></div>
+
+<!-- HEADER -->
+<header class="site-header">
+  <div class="header-brand">
+    <img src="logo.png" alt="MonthStayz" class="header-logo"
+         onerror="this.style.display='none';this.nextElementSibling.style.display='flex'" />
+    <div class="header-logo-fallback" style="display:none">🏝️</div>
+    <div class="header-title">
+      <h1>MonthStayz Thailand</h1>
+      <p>Check-in Protocol Dashboard</p>
+    </div>
+  </div>
+  <div class="header-right">
+    <div class="header-date">
+      <strong id="hdrDate">—</strong>
+      <span id="hdrTime">Bangkok Time</span>
+    </div>
+    <button class="btn btn-ghost btn-sm" onclick="prevMode ? loadPrevTrips() : complMode ? loadCompletedTrips() : loadData()">🔄 Refresh</button>
+    <button class="btn btn-ghost btn-sm" id="briefBtn" onclick="sendBriefing()">📨 Morning Briefing</button>
+  </div>
+</header>
+
+<!-- MAIN -->
+<main class="main">
+  <div class="action-bar">
+    <div class="action-bar-left">
+      <div class="date-pill">📅 <span id="pillDate">Today</span></div>
+      <input type="date" id="datePicker" style="padding:7px 12px;border:1.5px solid var(--gray-200);border-radius:9px;font-size:13px;font-family:inherit;cursor:pointer;background:var(--white);" onchange="onDateChange()" />
+      <button class="btn btn-outline btn-sm" id="prevBtn" onclick="togglePrevTrips()">🗂️ Previous Trips</button>
+      <button class="btn btn-outline btn-sm" id="complBtn" onclick="toggleCompleted()">✅ Completed Trips</button>
+    </div>
+    <button class="btn btn-teal btn-sm" onclick="sendBriefing()" id="tgBtn">📨 Send to DPEW</button>
+  </div>
+
+  <div class="summary-strip">
+    <div class="stat-card"><div class="num num-orange" id="sTotal">—</div><div class="lbl">Check-ins</div></div>
+    <div class="stat-card"><div class="num num-green"  id="sDone">—</div><div class="lbl">Fully Complete</div></div>
+    <div class="stat-card"><div class="num num-teal"   id="sProg">—</div><div class="lbl">In Progress</div></div>
+    <div class="stat-card"><div class="num num-red"    id="sPend">—</div><div class="lbl">Tasks Pending</div></div>
+  </div>
+
+<div id="cardsGrid">
+    <div class="state-box">
+      <span class="state-icon spin">⏳</span>
+      <h3>Loading today's check-ins…</h3>
+    </div>
+  </div>
+
+  <div class="log-toggle">
+    <button class="btn btn-outline btn-sm" onclick="toggleLog()">📝 Show Message Log</button>
+  </div>
+  <div class="log-panel" id="logPanel">
+    <table class="log-table">
+      <thead><tr><th>Time (Bangkok)</th><th>Recipient</th><th>Status</th><th>Preview</th></tr></thead>
+      <tbody id="logBody"></tbody>
+    </table>
+  </div>
+</main>
+
+<!-- ADMIN UNCHECK MODAL -->
+<div class="modal-bg" id="adminModal">
+  <div class="modal">
+    <h3>🔐 Admin Access Required</h3>
+    <p>This task has been marked complete. Only an admin can uncheck it.<br>Enter the admin password to proceed.</p>
+    <input type="password" class="modal-input" id="adminPass" placeholder="Enter admin password" />
+    <div class="modal-err" id="adminErr"></div>
+    <div class="modal-foot">
+      <button class="btn btn-outline" onclick="closeAdmin()">Cancel</button>
+      <button class="btn btn-orange" onclick="confirmUncheck()">Confirm Uncheck</button>
+    </div>
+  </div>
+</div>
+
+<!-- NAME PROMPT MODAL -->
+<div class="modal-bg" id="nameModal">
+  <div class="modal">
+    <h3>👋 Your Name</h3>
+    <p>Who's marking this task complete? This gets saved so you won't be asked again.</p>
+    <input type="text" class="modal-input" id="nameInput" placeholder="e.g. Noon, Prae, Hari…" />
+    <div class="modal-foot">
+      <button class="btn btn-outline" onclick="skipName()">Skip</button>
+      <button class="btn btn-orange" onclick="saveName()">Continue</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════
+// CONFIG — use a PRIVATE GitHub repo
+// ═══════════════════════════════════════
+// Airtable/Telegram tokens live ONLY in checkin_protocol_fixed.gs now — every
+// read/write here goes through the Web App proxy below (doPost's atGet/atPost/
+// atPatch/tgSend actions), authenticated with WEBAPP_SECRET instead. These two
+// are just symbolic tags to pick the Telegram target, not real chat IDs.
+const DPEW_CHAT = 'DPEW';
+const HARI_CHAT = 'HARI';
+const ADMIN_PWD = '8087';
+const TZ        = 'Asia/Bangkok';
+
+// Apps Script Web App — REQUIRED. Every Airtable/Telegram call this page makes
+// goes through it (see webappCall() below), since the actual tokens live only
+// in checkin_protocol_fixed.gs. The briefing buttons additionally call its
+// action=briefing, which runs the SAME sendMorningBriefing() the 8:30 AM
+// trigger uses, so that message can never drift from the dashboard's own data.
+const WEBAPP_URL    = 'https://script.google.com/macros/s/AKfycbw9jdPl-dEYoOktPYRCWrLHKdbVudUmVVDzE7j1coSwFj3g_P05YQ14hj8Kp8bfRuX0/exec';
+const WEBAPP_SECRET = 'dpew-2026-secret';
+
+const MASTER_TBL = 'tblodAjjJy8FBQAY7';
+const COMP_TBL   = 'tblK36oDEOD1SdKQj';
+
+// Master trips field IDs
+const MT = {
+  tripId:   'fld1ziuDjSOUDfmdY',
+  tripName: 'fldOHC5sVVtVXB5Yv',
+  arrival:  'fldu81bwcyq86aBKz',
+  property: 'fldy6ALjM2cSz745M',
+  channel:  'fldrmnsj1lsZO9UoJ',
+  custName: 'fldB8I68PoBtSDWeS',
+  group:    'fldAnwCUUCiV32DCE',
+  contact:  'fldw9vgDW7PsIudZo',   // Contact Channel (from CRM contact) — multipleLookupValues
+  checkout: 'fldiQISqiSkO45tvn',   // Checkout Date
+  status:   'fldxU0AyJl5bkeDg2',   // Inquiry status
+};
+
+// Completions field IDs
+const CT = {
+  tripId:     'fldUNpm31vNyoNuGC',
+  masterRec:  'fld1RNQz0VasAfCtw',
+  property:   'fldvrWs3pfSdNce0w',
+  custName:   'fldAAib7G6qnkRJqM',
+  channel:    'fldvfNM43HeNNRq81',
+  arrival:    'fldh8ATDYHKW9V3DQ',
+  deposit:    'fldPSNu2SDgIW5SBD',
+  passport:   'fldPh5ggFtwWIAd0k',
+  electric:   'fldtMHMC0ylWZr0ae',
+  water:      'fldXkjX7159cfKD0g',
+  depositAt:  'fldX691UPBebXAhZ1',
+  passportAt: 'fldMJaSSbWKVG9omE',
+  electricAt: 'fldG5TthLcuYgXqEh',
+  waterAt:    'fldcydcrIvDvYKgep',
+  needsElec:  'fld04aLyfyfscTcnX',
+  needsWater: 'fldG7hnWqLBaDZHjp',
+  depositWaived:'fldtIg9hkHzaM06Sn',
+  electricNA: 'fldkgDZ3a0EKDWoAp',
+  waterNA:    'fldhijaiQ5NTUs4UU',
+  doneBy:     'fldIzoPJxrHYpy8dP',
+  group:      'fldOMNlOpUbTfoAwW',
+  notes:      'fldoTudQrPX8Caz9d',
+  custNoResp: 'fldKaWYKMc4y7MC1C',
+  custNoRespReason: 'fld0C3vYNCf37sZUZ',
+  // ── Meter readings & check-out protocol ──
+  elecStart:      'fldXGKtMnumXtfZjr',
+  waterStart:     'fldFVzTgJ6I9punJ8',
+  elecEnd:        'fldalZfIKA0LGixz1',
+  waterEnd:       'fldELHFaO2Xu1rjdk',
+  elecCharges:    'fldexgzLBqIiz0ejK',
+  waterCharges:   'fldzB8Dg3wM82vswz',
+  depositRet:     'fldjoXaHMKY2nXV8X',
+  elecChargeDone: 'fldKXTxKFVg8123iZ',
+  waterChargeDone:'fld276er0j5Ibrpbp',
+  depositRetAt:   'fld7mDee17Y2oEkLB',
+  elecChargeAt:   'fldBFVRlKzNo9rsK9',
+  waterChargeAt:  'fldfAHhWTKHlvXPxt',
+  checkoutDate:   'fldg1mZWcduj0uPjq',
+};
+
+const RATE_ELEC  = 6;    // THB per unit
+const RATE_WATER = 50;   // THB per unit
+
+// ═══════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════
+let tripData       = [];
+let pendingUncheck = null;
+let pendingCheck   = null;
+let selectedDate   = todayBKK();
+let refreshTimer   = null;
+let msgLog         = [];
+let prevMode       = false;
+let complMode      = false;
+
+// ═══════════════════════════════════════
+// DATE HELPERS
+// ═══════════════════════════════════════
+function todayBKK() {
+  return new Date().toLocaleDateString('en-CA', { timeZone: TZ });
+}
+function fmtDate(d) {
+  return new Date(d + 'T00:00:00').toLocaleDateString('en-GB', { day:'numeric', month:'long', year:'numeric' });
+}
+function fmtTime(iso) {
+  if (!iso) return '';
+  try { return new Date(iso).toLocaleTimeString('en-US', { hour:'2-digit', minute:'2-digit', timeZone: TZ }); }
+  catch { return ''; }
+}
+function nowBKK() {
+  return new Date().toLocaleTimeString('en-US', { hour:'2-digit', minute:'2-digit', timeZone: TZ });
+}
+function tickClock() {
+  const d = new Date();
+  document.getElementById('hdrDate').textContent =
+    d.toLocaleDateString('en-US', { weekday:'long', day:'numeric', month:'long', timeZone: TZ });
+  document.getElementById('hdrTime').textContent =
+    d.toLocaleTimeString('en-US', { hour:'2-digit', minute:'2-digit', timeZone: TZ }) + ' Bangkok';
+}
+
+// ═══════════════════════════════════════
+// WEB APP PROXY — the only thing this page talks to for Airtable/Telegram.
+// Body is sent as a plain string (no explicit Content-Type) on purpose: it
+// keeps this a CORS "simple request", which Apps Script Web Apps answer
+// correctly. Apps Script reads e.postData.contents regardless.
+// ═══════════════════════════════════════
+async function webappCall(action, params) {
+  const r = await fetch(WEBAPP_URL, {
+    method: 'POST',
+    body: JSON.stringify({ secret: WEBAPP_SECRET, action, ...params }),
+  });
+  const d = await r.json();
+  if (!d.ok) throw new Error(d.error || (action + ' failed'));
+  return d;
+}
+
+// ═══════════════════════════════════════
+// AIRTABLE API — proxied; pagination already happens server-side in atGet()
+// inside checkin_protocol_fixed.gs, so this always returns the full set.
+// ═══════════════════════════════════════
+async function atGet(tableId, formula, fields) {
+  const d = await webappCall('atGet', { tableId, formula, fields });
+  return d.records || [];
+}
+
+async function atPost(tableId, fields) {
+  const d = await webappCall('atPost', { tableId, fields });
+  return d.record;
+}
+
+async function atPatch(tableId, recId, fields) {
+  return webappCall('atPatch', { tableId, recordId: recId, fields });
+}
+
+// ═══════════════════════════════════════
+// TELEGRAM — also proxied; chatId here is just DPEW_CHAT/HARI_CHAT (symbolic
+// tags), the real chat IDs stay server-side.
+// ═══════════════════════════════════════
+async function tgSend(chatId, text) {
+  try {
+    const r = await fetch(WEBAPP_URL, {
+      method: 'POST',
+      body: JSON.stringify({ secret: WEBAPP_SECRET, action: 'tgSend', chat: chatId === HARI_CHAT ? 'hari' : 'dpew', text }),
+    });
+    const d = await r.json();
+    addLog(chatId === DPEW_CHAT ? 'DPEW Group' : 'Hari Ananth', !!d.ok, text.substring(0, 100));
+    return !!d.ok;
+  } catch(e) {
+    addLog(chatId === DPEW_CHAT ? 'DPEW Group' : 'Hari Ananth', false, e.message);
+    return false;
+  }
+}
+
+// ═══════════════════════════════════════
+// BUSINESS RULES
+// ═══════════════════════════════════════
+function rules(property, channel) {
+  const bdc = (channel||'').toLowerCase().includes('booking');
+  const snt = (property||'').toUpperCase().includes('SNT');
+  return { needsElec: !bdc, needsWater: !bdc && !snt };
+}
+
+function extractName(v) {
+  if (!v) return '';
+  if (Array.isArray(v)) return v.join(', ');
+  if (typeof v === 'object' && v.valuesByLinkedRecordId)
+    return Object.values(v.valuesByLinkedRecordId).flat().join(', ');
+  return String(v);
+}
+
+// ═══════════════════════════════════════
+// LOAD DATA
+// ═══════════════════════════════════════
+async function loadData() {
+  document.getElementById('cardsGrid').innerHTML =
+    '<div class="state-box"><span class="state-icon spin">⏳</span><h3>Loading check-ins…</h3></div>';
+  setSummary('—','—','—','—');
+
+  try {
+    const isToday = selectedDate === todayBKK();
+
+    // Build date filter using YEAR/MONTH/DAY — most reliable across timezones
+    const [yr, mo, dy] = selectedDate.split('-').map(Number);
+    const dateFilter = `AND(YEAR({Arrival Date})=${yr}, MONTH({Arrival Date})=${mo}, DAY({Arrival Date})=${dy})`;
+
+    // Today: confirmed arrivals only
+    // Past dates: any Phuket trip on that date (status already changed)
+    const formula = isToday
+      ? `AND(${dateFilter}, FIND('Phuket', {City}), OR({Inquiry status}='Paid and confirmed', {Inquiry status}='Checked-In'))`
+      : `AND(${dateFilter}, FIND('Phuket', {City}), OR({Inquiry status}='Checked-In', {Inquiry status}='Trip completed'))`;
+    const fields  = Object.values(MT);
+
+    // Check-outs: trips departing on the selected date
+    const outDateFilter = `AND(YEAR({Checkout Date})=${yr}, MONTH({Checkout Date})=${mo}, DAY({Checkout Date})=${dy})`;
+    const outFormula = `AND(${outDateFilter}, FIND('Phuket', {City}), OR({Inquiry status}='Checked-In', {Inquiry status}='Trip completed', {Inquiry status}='Paid and confirmed'))`;
+
+    const [rawTrips, rawComps, rawOuts] = await Promise.all([
+      atGet(MASTER_TBL, formula, fields),
+      atGet(COMP_TBL, `AND(YEAR({Arrival Date})=${yr}, MONTH({Arrival Date})=${mo}, DAY({Arrival Date})=${dy})`),
+      atGet(MASTER_TBL, outFormula, fields)
+    ]);
+
+    // Fetch completion records (created at check-in) for the departing trips
+    let outComps = [];
+    if (rawOuts.length) {
+      const orParts = rawOuts.map(r => `{Master Trip Record ID}='${r.id}'`);
+      outComps = await atGet(COMP_TBL, `OR(${orParts.join(',')})`);
+    }
+    const outCompByMid = {};
+    outComps.forEach(r => {
+      const mid = r.fields[CT.masterRec];
+      if (!mid) return;
+      const existing = outCompByMid[mid];
+      const hasData = r.fields[CT.property] || r.fields[CT.custName];
+      // Prefer the record that actually has check-in data over blank duplicates
+      if (!existing || (hasData && !(existing.fields[CT.property] || existing.fields[CT.custName]))) {
+        outCompByMid[mid] = r;
+      }
+    });
+
+    const compByMid = {};
+    rawComps.forEach(r => {
+      const mid = r.fields[CT.masterRec];
+      if (mid) compByMid[mid] = r;
+    });
+    tripData = [];
+    const creates = [];
+
+    for (const raw of rawTrips) {
+      const f        = raw.fields;
+      const property = f[MT.property] || '';
+      const channel  = typeof f[MT.channel] === 'object' ? (f[MT.channel]?.name || '') : (f[MT.channel] || '');
+      const contact  = extractName(f[MT.contact]);  // Contact Channel from CRM contact (multipleLookupValues)
+      const custName = extractName(f[MT.custName]);
+      const group    = f[MT.group] || '';
+      const tripName = f[MT.tripName] || '';
+      const { needsElec, needsWater } = rules(property, channel);
+      const mid = raw.id;
+
+      tripData.push({
+        mode: 'in',
+        masterRecId: mid,
+        tripId: f[MT.tripId] || '',
+        tripName, property, channel, contact, custName, group,
+        arrival:  f[MT.arrival]  || selectedDate,
+        checkout: f[MT.checkout] || '',
+        needsElec, needsWater,
+        compId: compByMid[mid]?.id    || null,
+        cf:     compByMid[mid]?.fields || {},
+        noRecord: !compByMid[mid],  // flag: no completion record found
+      });
+
+      // Only create missing completion records for TODAY — never for past dates
+      if (!compByMid[mid] && isToday) {
+        creates.push({ tripIdx: tripData.length - 1, mid, property, channel, custName, group, needsElec, needsWater });
+      }
+    }
+
+    // ── Build CHECK-OUT cards ──
+    const outCreates = [];
+    for (const raw of rawOuts) {
+      const f        = raw.fields;
+      const property = f[MT.property] || '';
+      const channel  = typeof f[MT.channel] === 'object' ? (f[MT.channel]?.name || '') : (f[MT.channel] || '');
+      const contact  = extractName(f[MT.contact]);
+      const custName = extractName(f[MT.custName]);
+      const group    = f[MT.group] || '';
+      const tripName = f[MT.tripName] || '';
+      const { needsElec, needsWater } = rules(property, channel);
+      const mid = raw.id;
+      const comp = outCompByMid[mid];
+
+      tripData.push({
+        mode: 'out',
+        masterRecId: mid,
+        tripId: f[MT.tripId] || '',
+        tripName, property, channel, contact, custName, group,
+        arrival:  f[MT.arrival]  || '',
+        checkout: f[MT.checkout] || selectedDate,
+        needsElec, needsWater,
+        compId: comp?.id     || null,
+        cf:     comp?.fields || {},
+        noRecord: !comp,
+      });
+
+      if (!comp && isToday) {
+        outCreates.push({ tripIdx: tripData.length - 1, mid, property, channel, custName, group, needsElec, needsWater,
+                          arrival: f[MT.arrival] || '', checkout: f[MT.checkout] || selectedDate });
+      }
+    }
+
+    // Create missing completion records for today's check-outs (older trips without records)
+    if (outCreates.length) {
+      await Promise.all(outCreates.map(async ({ tripIdx, mid, property, channel, custName, group, needsElec, needsWater, arrival, checkout }) => {
+        const rec = await atPost(COMP_TBL, {
+          [CT.tripId]:    tripData[tripIdx].tripId,
+          [CT.masterRec]: mid,
+          [CT.property]:  property,
+          [CT.custName]:  custName,
+          [CT.channel]:   channel,
+          [CT.arrival]:   arrival || selectedDate,
+          [CT.checkoutDate]: checkout,
+          [CT.needsElec]: needsElec,
+          [CT.needsWater]:needsWater,
+          [CT.group]:     group,
+          [CT.deposit]:       false, [CT.passport]:  false,
+          [CT.electric]:      false, [CT.water]:     false,
+          [CT.depositWaived]: false,
+          [CT.electricNA]:    false, [CT.waterNA]:   false,
+        });
+        if (rec) {
+          tripData[tripIdx].compId   = rec.id;
+          tripData[tripIdx].cf       = rec.fields;
+          tripData[tripIdx].noRecord = false;
+        }
+      }));
+    }
+
+    // Create missing records only for today's check-ins
+    if (creates.length) {
+      await Promise.all(creates.map(async ({ tripIdx, mid, property, channel, custName, group, needsElec, needsWater }) => {
+        const rec = await atPost(COMP_TBL, {
+          [CT.tripId]:    tripData[tripIdx].tripId,
+          [CT.masterRec]: mid,
+          [CT.property]:  property,
+          [CT.custName]:  custName,
+          [CT.channel]:   channel,
+          [CT.arrival]:   selectedDate,
+          [CT.checkoutDate]: tripData[tripIdx].checkout || null,
+          [CT.needsElec]: needsElec,
+          [CT.needsWater]:needsWater,
+          [CT.group]:     group,
+          [CT.deposit]:       false, [CT.passport]:  false,
+          [CT.electric]:      false, [CT.water]:     false,
+          [CT.depositWaived]: false,
+          [CT.electricNA]:    false, [CT.waterNA]:   false,
+        });
+        if (rec) {
+          tripData[tripIdx].compId   = rec.id;
+          tripData[tripIdx].cf       = rec.fields;
+          tripData[tripIdx].noRecord = false;
+        }
+      }));
+    }
+
+    // ── Overdue items (last 7 days) — shown on the today view so it matches Telegram reminders ──
+    if (isToday) {
+      try {
+        const past = await fetchPendingPast();
+        past.forEach(t => { t.overdue = true; tripData.push(t); });
+      } catch(e2) { console.warn('Overdue section failed to load:', e2); }
+    }
+
+    renderCards();
+    updateSummary();
+
+  } catch(e) {
+    document.getElementById('cardsGrid').innerHTML =
+      `<div class="state-box"><span class="state-icon">❌</span><h3>Error loading data</h3>
+       <p style="color:var(--danger);font-size:13px;margin-top:6px">${e.message}</p>
+       <button class="btn btn-orange" style="margin-top:18px" onclick="loadData()">Try Again</button></div>`;
+  }
+}
+
+// ═══════════════════════════════════════
+// RENDER
+// ═══════════════════════════════════════
+function renderCards() {
+  // Visibility: front page shows pending, open trips only; other modes show what they fetched
+  const visible = tripData.map((t,i)=>({t,i})).filter(x => {
+    if (prevMode || complMode) return true;
+    if (x.t.cf && x.t.cf[CT.custNoResp]) return false;        // closed: no response
+    if (isTripDone(x.t)) return false;                        // fully completed → Completed Trips view
+    return true;
+  });
+  const ins  = visible.filter(x => x.t.mode !== 'out' && !x.t.overdue);
+  const outs = visible.filter(x => x.t.mode === 'out' && !x.t.overdue);
+  const emptyIn  = complMode ? 'No completed check-ins in the last 10 days' : prevMode ? 'No incomplete check-in protocols 🎉' : 'No pending Phuket check-ins for this date 🎉';
+  const emptyOut = complMode ? 'No completed check-outs in the last 10 days' : prevMode ? 'No incomplete check-out protocols 🎉' : 'No pending Phuket check-outs for this date 🎉';
+  const inLabel  = complMode ? '✅ Completed Check-ins' : `🏠 Check-ins${prevMode?' — Pending':''}`;
+  const outLabel = complMode ? '✅ Completed Check-outs' : `🧳 Check-outs${prevMode?' — Pending':''}`;
+  let html = '';
+  html += `<h2 class="section-head sh-in">${inLabel} <span style="font-size:13px;font-weight:600;color:var(--gray-500)">(${ins.length})</span></h2>`;
+  html += ins.length
+    ? `<div class="cards-grid">${ins.map(x => cardHTML(x.t, x.i)).join('')}</div>`
+    : `<div class="section-empty">${emptyIn}</div>`;
+  html += `<h2 class="section-head sh-out">${outLabel} <span style="font-size:13px;font-weight:600;color:var(--gray-500)">(${outs.length})</span></h2>`;
+  html += outs.length
+    ? `<div class="cards-grid">${outs.map(x => cardHTML(x.t, x.i)).join('')}</div>`
+    : `<div class="section-empty">${emptyOut}</div>`;
+
+  // Overdue sections (today view only) — mirrors the Telegram reminder content
+  const odIns  = visible.filter(x => x.t.overdue && x.t.mode !== 'out');
+  const odOuts = visible.filter(x => x.t.overdue && x.t.mode === 'out');
+  if (odIns.length) {
+    html += `<h2 class="section-head sh-in">⏳ Overdue Check-ins — last 10 days <span style="font-size:13px;font-weight:600;color:var(--gray-500)">(${odIns.length})</span></h2>`;
+    html += `<div class="cards-grid">${odIns.map(x => cardHTML(x.t, x.i)).join('')}</div>`;
+  }
+  if (odOuts.length) {
+    html += `<h2 class="section-head sh-out">⏳ Overdue Check-outs — last 10 days <span style="font-size:13px;font-weight:600;color:var(--gray-500)">(${odOuts.length})</span></h2>`;
+    html += `<div class="cards-grid">${odOuts.map(x => cardHTML(x.t, x.i)).join('')}</div>`;
+  }
+  document.getElementById('cardsGrid').innerHTML = html;
+}
+
+function cardHTML(trip, idx) {
+  const tasks   = taskList(trip);
+  const total   = tasks.length;
+  const done    = tasks.filter(t=>isResolved(t)).length;
+  const pct     = total ? Math.round(done/total*100) : 0;
+  const allDone = done === total;
+  const anyDone = done > 0;
+
+  const cls     = allDone ? 'card-done' : anyDone ? 'card-partial' : 'card-pending';
+  const pbCls   = pct===100 ? 'pb-done' : pct>0 ? 'pb-partial' : 'pb-zero';
+  const emoji   = allDone ? '✅' : anyDone ? '🔄' : '⏳';
+  const chBadge = channelBadge(trip.channel);
+  const coBadge = trip.contact ? `<span class="badge badge-teal">💬 ${esc(trip.contact)}</span>` : '';
+
+  const isOut = trip.mode === 'out';
+  return `
+<div class="trip-card ${isOut?'card-out ':''}${cls}" id="card-${idx}">
+  <div class="card-topbar">
+
+    <!-- Row 0: mode chip -->
+    <div style="margin-bottom:6px"><span class="mode-chip ${isOut?'chip-out':'chip-in'}">${isOut?'🧳 Check-out':'🏠 Check-in'}</span></div>
+
+    <!-- Row 1: Property + status -->
+    <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:6px">
+      <div class="card-prop">${esc(trip.property)}</div>
+      <span style="font-size:22px;flex-shrink:0">${emoji}</span>
+    </div>
+
+    <!-- Row 2: Customer group naming -->
+    <div style="font-size:12px;font-weight:700;color:var(--orange-dk);background:var(--orange-lt);border-radius:6px;padding:4px 8px;margin-bottom:8px;word-break:break-all;line-height:1.5;">
+      📋 ${esc(trip.group)}
+    </div>
+
+    <!-- Row 3: Customer name -->
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+      <span class="card-avatar">${esc(initials(trip.custName))}</span>
+      <span class="card-status-dot"></span>
+      <span style="font-size:15px;font-weight:700;color:var(--brown);">${esc(trip.custName)}</span>
+    </div>
+
+    <!-- Row 4: Badges -->
+    <div class="badges">${chBadge}${coBadge}</div>
+  </div>
+
+  <div class="card-body">
+    ${trip.noRecord ? `<div style="font-size:12px;color:var(--gray-500);background:var(--gray-100);border-radius:8px;padding:8px 12px;margin-bottom:12px;text-align:center;">📭 No check-in record was tracked for this date</div>` : ''}
+    <div class="tasks" id="tasks-${idx}">
+      ${tasks.map(t => taskRowHTML(idx, t)).join('')}
+    </div>
+    <div class="prog-wrap">
+      <div class="prog-meta">
+        <span>${done}/${total} tasks done</span><span>${pct}%</span>
+      </div>
+      <div class="prog-track">
+        <div class="prog-bar ${pbCls}" id="prog-${idx}" style="width:${pct}%"></div>
+      </div>
+    </div>
+    <div class="note-wrap" onclick="event.stopPropagation()">
+      <label>💬 Comment / reason (visible to supervisor in reminders & escalation)</label>
+      <textarea id="note-${idx}" placeholder="e.g. Guest arriving late at 11 PM — deposit will be collected on arrival">${esc(trip.cf[CT.notes] || '')}</textarea>
+      <div class="note-actions">
+        <button class="btn btn-outline btn-sm" onclick="saveNote(${idx})">💾 Save Comment</button>
+        <span class="note-saved" id="notesaved-${idx}"></span>
+      </div>
+    </div>
+    ${complMode ? '' : noRespBlockHTML(idx)}
+  </div>
+
+  <div class="card-foot" id="foot-${idx}">${footerHTML(idx)}</div>
+</div>`;
+}
+
+// Initials for the guest avatar, e.g. "Sahil Shah" → "SS"
+function initials(name) {
+  const parts = String(name||'').trim().split(/\s+/).filter(Boolean);
+  if (!parts.length) return '?';
+  return (parts[0][0] + (parts[1]?.[0]||'')).toUpperCase();
+}
+
+// ── "Customer did not respond" block — shown under the comment box on
+// every card (check-in and check-out). Checking it just arms the closure;
+// nothing is saved until "All details captured" is clicked. ──
+function noRespBlockHTML(idx) {
+  const trip = tripData[idx];
+  const on = !!trip._noRespPending;
+  return `
+<div class="noresp-wrap" onclick="event.stopPropagation()">
+  <div class="noresp-row" onclick="toggleNoResponse(${idx})">
+    <div class="noresp-check ${on?'on':''}" id="norespchk-${idx}"></div>
+    <div>
+      <div class="noresp-label">Customer did not respond</div>
+      <div class="noresp-sub">Closes this trip — moves it to Completed / Closed</div>
+    </div>
+  </div>
+  <textarea id="norespreason-${idx}" ${on?'':'disabled'}
+    placeholder="Reason — required to close, e.g. asked twice on WhatsApp, no reply since check-in"
+    oninput="updateCaptureButton(${idx})">${esc(trip.cf[CT.custNoRespReason] || '')}</textarea>
+</div>`;
+}
+
+function toggleNoResponse(idx) {
+  const trip = tripData[idx];
+  trip._noRespPending = !trip._noRespPending;
+  const chk = document.getElementById(`norespchk-${idx}`);
+  const ta  = document.getElementById(`norespreason-${idx}`);
+  if (chk) chk.classList.toggle('on', trip._noRespPending);
+  if (ta) { ta.disabled = !trip._noRespPending; if (trip._noRespPending) ta.focus(); }
+  updateCaptureButton(idx);
+}
+
+// Whether "All details captured" can be clicked: every task resolved,
+// OR the no-response box is checked with a reason typed in.
+function gateFor(idx) {
+  const trip = tripData[idx];
+  const tasks = taskList(trip);
+  const allDone = tasks.length > 0 && tasks.every(t => isResolved(t));
+  const ta = document.getElementById(`norespreason-${idx}`);
+  const reasonText = (ta ? ta.value : '').trim();
+  const noRespReady = !!trip._noRespPending && reasonText.length > 0;
+  return { allDone, noRespReady, enabled: allDone || noRespReady };
+}
+
+function footerHTML(idx) {
+  const g = gateFor(idx);
+  let help = '';
+  if (g.allDone) help = '';
+  else if (g.noRespReady) help = 'Ready — will close this trip as no-response';
+  else help = 'Complete all tasks, or check "Customer did not respond" with a reason';
+  return `
+    <button class="btn btn-teal btn-sm" id="capturebtn-${idx}" ${g.enabled?'':'disabled'} onclick="captureDetails(${idx})">📨 All details captured</button>
+    ${g.allDone ? '<span class="done-tag">✅ All tasks done!</span>' : (help ? `<span class="capture-help">${help}</span>` : '')}
+  `;
+}
+
+function updateCaptureButton(idx) {
+  const foot = document.getElementById(`foot-${idx}`);
+  if (foot) foot.innerHTML = footerHTML(idx);
+}
+
+// ── "All details captured" click: either the completion notice (all tasks
+// resolved) or the no-response closure notice (customer unreachable). ──
+async function captureDetails(idx) {
+  const trip = tripData[idx];
+  const g = gateFor(idx);
+  if (!g.enabled) return;
+  const btn = document.getElementById(`capturebtn-${idx}`);
+  if (btn) { btn.disabled = true; btn.textContent = '⏳ Sending…'; }
+
+  try {
+    if (g.noRespReady && !g.allDone) {
+      const reason = (document.getElementById(`norespreason-${idx}`)?.value || '').trim();
+      if (!trip.compId) { toast('No completion record — try refreshing', 'err'); return; }
+      await atPatch(COMP_TBL, trip.compId, { [CT.custNoResp]: true, [CT.custNoRespReason]: reason });
+      trip.cf[CT.custNoResp] = true;
+      trip.cf[CT.custNoRespReason] = reason;
+
+      const tasks = taskList(trip);
+      const resolved = tasks.filter(t => isResolved(t)).length;
+      let msg = `🚫 <b>${esc(trip.property)} — Closed: customer did not respond</b>\n\n`;
+      msg += `👤 ${esc(trip.custName)}  |  ${esc(trip.channel)}\n\n`;
+      msg += `<b>Protocol status at closure (${resolved}/${tasks.length}):</b>\n`;
+      tasks.forEach(t => { msg += `${isResolved(t)?'✅':'☐'} ${t.label}\n`; });
+      msg += `\n💬 <b>No-response reason:</b> <i>${esc(reason)}</i>`;
+      const generalNote = (document.getElementById(`note-${idx}`)?.value || trip.cf[CT.notes] || '').trim();
+      if (generalNote) msg += `\n💬 <b>Comment:</b> <i>${esc(generalNote)}</i>`;
+
+      const ok = await tgSend(DPEW_CHAT, msg);
+      toast(ok ? '🚫 Trip closed — customer did not respond' : '❌ Closed, but Telegram notice failed', ok?'info':'err');
+      renderCards();
+      updateSummary();
+    } else {
+      const sent = await maybeNotifyComplete(idx);
+      toast(sent ? '📨 Notice sent to DPEW!' : '✅ Already marked complete', sent?'ok':'info');
+      updateCaptureButton(idx);
+    }
+  } catch(e) {
+    toast('Failed: ' + e.message, 'err');
+    updateCaptureButton(idx);
+  }
+}
+
+// ── Save the card comment to Airtable ──
+async function saveNote(idx) {
+  const trip = tripData[idx];
+  if (!trip?.compId) { toast('No completion record — try refreshing', 'err'); return; }
+  const ta = document.getElementById(`note-${idx}`);
+  const text = (ta?.value || '').trim();
+  try {
+    const name = localStorage.getItem('ms_name');
+    const stamped = text ? (name ? `${text} — ${name}` : text) : '';
+    await atPatch(COMP_TBL, trip.compId, { [CT.notes]: stamped || null });
+    trip.cf[CT.notes] = stamped;
+    if (ta && stamped !== text) ta.value = stamped;
+    const tag = document.getElementById(`notesaved-${idx}`);
+    if (tag) { tag.textContent = '✓ Saved'; setTimeout(() => { tag.textContent = ''; }, 2500); }
+    toast('💬 Comment saved', 'ok');
+  } catch(e) { toast('Failed to save comment: ' + e.message, 'err'); }
+}
+
+function taskRowHTML(idx, t) {
+  const rowCls = t.isNA ? 't-na-marked' : t.done ? 't-done' : '';
+  const btnLabel  = t.isNA ? `✕ ${t.naLabel} (undo)` : t.naLabel;
+  const naBtn     = t.hasNA
+    ? `<button class="na-btn ${t.isNA?'na-active':''}"
+         onclick="event.stopPropagation();onNAClick(${idx},'${t.key}','${t.naFieldId}',${t.isNA})"
+         title="${t.naLabel}">${btnLabel}</button>`
+    : '';
+  const naText    = t.isNA ? (t.naLabel === 'No Deposit' ? 'Waived' : 'Not applicable') : '';
+  return `
+<div class="task-row ${rowCls}" id="task-${idx}-${t.key}"
+     onclick="onTaskClick(${idx},'${t.key}','${t.fieldId}','${t.atFieldId}',${t.done},${t.isNA})">
+  <div class="task-box">
+    <svg class="check-svg" width="13" height="10" viewBox="0 0 13 10" fill="none">
+      <path d="M1.5 5L5 8.5L11.5 1.5" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+  </div>
+  <span class="task-label">${t.label}</span>
+  ${naText ? `<span class="na-label">${naText}</span>` : ''}
+  ${t.done && t.timeVal && !t.isNA ? `<span class="task-time">${fmtTime(t.timeVal)}</span>` : ''}
+  ${t.done && !t.isNA ? '<span class="lock-icon">🔒</span>' : ''}
+  ${naBtn}
+</div>${meterBlockHTML(idx, t)}`;
+}
+
+// Meter input blocks rendered under electric/water tasks
+function meterBlockHTML(idx, t) {
+  if (t.isNA) return '';
+  const trip = tripData[idx];
+  const cf   = trip.cf;
+
+  // Check-in: single "Meter start number" input, gates the checkbox
+  if (t.meter) {
+    const val = cf[t.meter.field];
+    return `
+<div class="meter-block" onclick="event.stopPropagation()">
+  <label>🔢 Meter start number</label>
+  <input type="number" step="any" inputmode="decimal" id="mstart-${idx}-${t.key}"
+    value="${val ?? ''}" ${t.done ? 'disabled' : ''}
+    placeholder="Enter meter start number"
+    onchange="saveMeterField(${idx}, '${t.meter.field}', this.value)" />
+</div>`;
+  }
+
+  // Check-out: start (pre-filled) + end + Calculate button + charges
+  if (t.calc) {
+    const start   = cf[t.calc.startField];
+    const end     = cf[t.calc.endField];
+    const charges = cf[t.calc.chargeField];
+    const startLocked = (start !== undefined && start !== null && start !== '') || t.done;
+    return `
+<div class="meter-block" onclick="event.stopPropagation()">
+  <div class="meter-grid">
+    <div>
+      <label>Meter start number</label>
+      <input type="number" step="any" inputmode="decimal" id="cstart-${idx}-${t.key}"
+        value="${start ?? ''}" ${startLocked ? 'disabled' : ''}
+        placeholder="From check-in"
+        onchange="saveMeterField(${idx}, '${t.calc.startField}', this.value)" />
+    </div>
+    <div>
+      <label>Meter end number</label>
+      <input type="number" step="any" inputmode="decimal" id="cend-${idx}-${t.key}"
+        value="${end ?? ''}" ${t.done ? 'disabled' : ''}
+        placeholder="Enter meter end number" />
+    </div>
+  </div>
+  <button class="btn btn-teal btn-sm calc-btn" ${t.done ? 'disabled' : ''}
+    onclick="event.stopPropagation();calcCharges(${idx}, '${t.key}')">🧮 Calculate ${t.calc.word} charges</button>
+  ${charges !== undefined && charges !== null ? `<div class="charge-amt">💰 ${t.calc.word.charAt(0).toUpperCase()+t.calc.word.slice(1)} charges: ฿${Number(charges).toLocaleString()}</div>` : ''}
+</div>`;
+  }
+  return '';
+}
+
+// Save a meter reading field (on blur / change)
+async function saveMeterField(idx, fieldId, value) {
+  const trip = tripData[idx];
+  if (!trip?.compId) { toast('No completion record — try refreshing', 'err'); return; }
+  const num = value === '' ? null : Number(value);
+  if (num !== null && isNaN(num)) { toast('Enter a valid number', 'err'); return; }
+  try {
+    await atPatch(COMP_TBL, trip.compId, { [fieldId]: num });
+    trip.cf[fieldId] = num;
+    toast('💾 Meter reading saved', 'ok');
+  } catch(e) { toast('Failed to save reading: ' + e.message, 'err'); }
+}
+
+// Calculate charges: (end − start) × rate, saved to Airtable
+async function calcCharges(idx, key) {
+  const trip = tripData[idx];
+  if (!trip?.compId) { toast('No completion record — try refreshing', 'err'); return; }
+  const t = taskList(trip).find(x => x.key === key);
+  if (!t?.calc) return;
+
+  const endInput = document.getElementById(`cend-${idx}-${key}`);
+  const startInput = document.getElementById(`cstart-${idx}-${key}`);
+  const start = startInput && !startInput.disabled && startInput.value !== '' ? Number(startInput.value) : Number(trip.cf[t.calc.startField]);
+  const end   = endInput && endInput.value !== '' ? Number(endInput.value) : Number(trip.cf[t.calc.endField]);
+
+  if (isNaN(start) || trip.cf[t.calc.startField] === undefined && (!startInput || startInput.value === '')) {
+    toast('⚠️ Meter start number is missing — enter it first', 'err'); return;
+  }
+  if (isNaN(end) || !endInput || endInput.value === '') {
+    toast('⚠️ Enter the meter end number first', 'err'); return;
+  }
+  if (end < start) { toast('⚠️ Meter end cannot be lower than meter start', 'err'); return; }
+
+  const charges = Math.round((end - start) * t.calc.rate * 100) / 100;
+  try {
+    await atPatch(COMP_TBL, trip.compId, {
+      [t.calc.startField]: start,
+      [t.calc.endField]:   end,
+      [t.calc.chargeField]: charges,
+    });
+    trip.cf[t.calc.startField]  = start;
+    trip.cf[t.calc.endField]    = end;
+    trip.cf[t.calc.chargeField] = charges;
+    refreshCard(idx);
+    toast(`💰 ${t.calc.word.charAt(0).toUpperCase()+t.calc.word.slice(1)} charges: ฿${charges.toLocaleString()} (${end} − ${start}) × ${t.calc.rate}`, 'ok');
+  } catch(e) { toast('Failed to calculate: ' + e.message, 'err'); }
+}
+
+function taskList(trip) {
+  const cf = trip.cf;
+  if (trip.mode === 'out') {
+    // ── CHECK-OUT protocol ──
+    return [
+      { key:'depositRet', label:'💵 Deposit Returned',    fieldId:CT.depositRet,      atFieldId:CT.depositRetAt,  done:!!cf[CT.depositRet],      timeVal:cf[CT.depositRetAt],  show:true,            hasNA:true, isNA:!!cf[CT.depositWaived], naFieldId:CT.depositWaived, naLabel:'No Deposit' },
+      { key:'elecCharge', label:'⚡ Electricity Charges', fieldId:CT.elecChargeDone,  atFieldId:CT.elecChargeAt,  done:!!cf[CT.elecChargeDone],  timeVal:cf[CT.elecChargeAt],  show:trip.needsElec,  hasNA:true, isNA:!!cf[CT.electricNA],    naFieldId:CT.electricNA,    naLabel:'N/A',
+        calc:{ startField:CT.elecStart, endField:CT.elecEnd, chargeField:CT.elecCharges, rate:RATE_ELEC, word:'electricity' } },
+      { key:'waterCharge', label:'💧 Water Charges',      fieldId:CT.waterChargeDone, atFieldId:CT.waterChargeAt, done:!!cf[CT.waterChargeDone], timeVal:cf[CT.waterChargeAt], show:trip.needsWater, hasNA:true, isNA:!!cf[CT.waterNA],       naFieldId:CT.waterNA,       naLabel:'N/A',
+        calc:{ startField:CT.waterStart, endField:CT.waterEnd, chargeField:CT.waterCharges, rate:RATE_WATER, word:'water' } },
+    ].filter(t => t.show);
+  }
+  // ── CHECK-IN protocol ──
+  return [
+    { key:'deposit',  label:'💵 Deposit Collected',      fieldId:CT.deposit,   atFieldId:CT.depositAt,  done:!!cf[CT.deposit],  timeVal:cf[CT.depositAt],  show:true,             hasNA:true,  isNA:!!cf[CT.depositWaived],  naFieldId:CT.depositWaived, naLabel:'No Deposit' },
+    { key:'passport', label:'🛂 Passport Photo Taken',   fieldId:CT.passport,  atFieldId:CT.passportAt, done:!!cf[CT.passport], timeVal:cf[CT.passportAt], show:true,             hasNA:false, isNA:false,                   naFieldId:null,             naLabel:'' },
+    { key:'electric', label:'⚡ Electric Meter Reading', fieldId:CT.electric,  atFieldId:CT.electricAt, done:!!cf[CT.electric], timeVal:cf[CT.electricAt], show:trip.needsElec,   hasNA:true,  isNA:!!cf[CT.electricNA],     naFieldId:CT.electricNA,    naLabel:'N/A',
+      meter:{ field:CT.elecStart } },
+    { key:'water',    label:'💧 Water Meter Reading',    fieldId:CT.water,     atFieldId:CT.waterAt,    done:!!cf[CT.water],    timeVal:cf[CT.waterAt],    show:trip.needsWater,  hasNA:true,  isNA:!!cf[CT.waterNA],        naFieldId:CT.waterNA,       naLabel:'N/A',
+      meter:{ field:CT.waterStart } },
+  ].filter(t => t.show);
+}
+
+// A task counts as "resolved" if done OR marked N/A
+function isResolved(t) { return t.done || t.isNA; }
+
+function channelBadge(ch) {
+  const c = (ch||'').toLowerCase();
+  let cls = 'badge-gray';
+  if (c.includes('airbnb'))  cls = 'badge-airbnb';
+  else if (c.includes('booking')) cls = 'badge-booking';
+  else if (c.includes('cash')) cls = 'badge-cash';
+  else if (c.includes('direct')) cls = 'badge-direct';
+  else if (c.includes('agent')) cls = 'badge-agent';
+  return `<span class="badge ${cls}">📦 ${esc(ch)}</span>`;
+}
+
+function esc(s) {
+  return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+// ═══════════════════════════════════════
+// TASK CLICK
+// ═══════════════════════════════════════
+function onTaskClick(idx, key, fieldId, atFieldId, currentDone, currentNA) {
+  if (currentNA) return; // N/A tasks can only be changed via the N/A button
+
+  // ── Gating rules before ticking ──
+  if (!currentDone) {
+    const trip = tripData[idx];
+    const t = taskList(trip).find(x => x.key === key);
+    // Check-in meter tasks: require the meter start number first
+    if (t?.meter) {
+      const inputEl = document.getElementById(`mstart-${idx}-${key}`);
+      const val = inputEl && inputEl.value !== '' ? inputEl.value : trip.cf[t.meter.field];
+      if (val === undefined || val === null || val === '') {
+        toast('⚠️ Enter the meter start number before ticking this box', 'err');
+        return;
+      }
+      // Persist the reading together with the tick (in case blur didn't fire)
+      trip.cf[t.meter.field] = Number(val);
+    }
+    // Check-out charge tasks: require charges to be calculated first
+    if (t?.calc) {
+      const charges = trip.cf[t.calc.chargeField];
+      if (charges === undefined || charges === null) {
+        toast(`⚠️ Calculate the ${t.calc.word} charges before ticking this box`, 'err');
+        return;
+      }
+    }
+  }
+
+  if (currentDone) {
+    pendingUncheck = { idx, key, fieldId, atFieldId };
+    document.getElementById('adminPass').value = '';
+    document.getElementById('adminErr').textContent = '';
+    document.getElementById('adminModal').classList.add('open');
+    setTimeout(() => document.getElementById('adminPass').focus(), 50);
+  } else {
+    const name = localStorage.getItem('ms_name');
+    if (!name) {
+      pendingCheck = { idx, key, fieldId, atFieldId };
+      document.getElementById('nameInput').value = '';
+      document.getElementById('nameModal').classList.add('open');
+      setTimeout(() => document.getElementById('nameInput').focus(), 50);
+    } else {
+      doCheck(idx, key, fieldId, atFieldId, name);
+    }
+  }
+}
+
+async function doCheck(idx, key, fieldId, atFieldId, name) {
+  const trip = tripData[idx];
+  if (!trip?.compId) { toast('No completion record — try refreshing', 'err'); return; }
+  markSaving(idx, key, true);
+  try {
+    const now = new Date().toISOString();
+    const patch = { [fieldId]: true, [atFieldId]: now, [CT.doneBy]: name || 'Team' };
+    // Persist meter start reading together with the tick
+    const t = taskList(trip).find(x => x.key === key);
+    if (t?.meter && trip.cf[t.meter.field] !== undefined && trip.cf[t.meter.field] !== null) {
+      patch[t.meter.field] = Number(trip.cf[t.meter.field]);
+    }
+    await atPatch(COMP_TBL, trip.compId, patch);
+    trip.cf[fieldId] = true;
+    trip.cf[atFieldId] = now;
+    refreshCard(idx);
+    updateSummary();
+    toast('✅ Marked complete!', 'ok');
+    const sent = await maybeNotifyComplete(idx);
+    if (sent) toast('📨 Completion notice sent to DPEW!', 'ok');
+  } catch(e) {
+    toast('Failed to save: ' + e.message, 'err');
+  } finally { markSaving(idx, key, false); }
+}
+
+// ── Telegram notification when a card reaches 100% — fires automatically
+// from doCheck()/onNAClick(), and can be re-triggered (no-op if already sent)
+// by clicking "All details captured". Returns true only if it actually sent. ──
+async function maybeNotifyComplete(idx) {
+  const trip  = tripData[idx];
+  const tasks = taskList(trip);
+  if (!tasks.length || !tasks.every(t => isResolved(t))) return false;
+  if (trip._notified) return false;   // avoid double-sends in this session
+  trip._notified = true;
+
+  const tName = trip.tripName || trip.tripId || trip.property || 'Trip';
+  let msg;
+  if (trip.mode === 'out') {
+    msg = `🎉 <b>Great!! All protocols related to the trip "${esc(tName)}" is completed</b>`;
+  } else {
+    msg = `🎉 <b>Good job! You have completed all check in protocols</b>\n\n`
+        + `✈️ Trip: <b>${esc(tName)}</b>\n`
+        + `👤 Customer: ${esc(trip.custName || '—')}\n`
+        + `📅 Check-in: ${trip.arrival ? fmtDate(trip.arrival) : '—'}  |  Check-out: ${trip.checkout ? fmtDate(trip.checkout) : '—'}`;
+  }
+  return tgSend(DPEW_CHAT, msg);
+}
+
+async function doUncheck(idx, key, fieldId, atFieldId) {
+  const trip = tripData[idx];
+  if (!trip?.compId) { toast('No completion record', 'err'); return; }
+  markSaving(idx, key, true);
+  try {
+    await atPatch(COMP_TBL, trip.compId, { [fieldId]: false, [atFieldId]: null });
+    trip.cf[fieldId] = false;
+    trip.cf[atFieldId] = null;
+    refreshCard(idx);
+    updateSummary();
+    toast('Unchecked by admin', 'info');
+  } catch(e) {
+    toast('Failed to uncheck: ' + e.message, 'err');
+  } finally { markSaving(idx, key, false); }
+}
+
+function markSaving(idx, key, saving) {
+  const el = document.getElementById(`task-${idx}-${key}`);
+  if (el) el.classList.toggle('t-saving', saving);
+}
+
+function closeAdmin() {
+  document.getElementById('adminModal').classList.remove('open');
+  pendingUncheck = null;
+}
+
+function confirmUncheck() {
+  const pwd = document.getElementById('adminPass').value;
+  if (pwd !== ADMIN_PWD) {
+    document.getElementById('adminErr').textContent = '✗ Incorrect password.';
+    document.getElementById('adminPass').value = '';
+    return;
+  }
+  document.getElementById('adminModal').classList.remove('open');
+  if (pendingUncheck) {
+    const { idx, key, fieldId, atFieldId, isNAUndo } = pendingUncheck;
+    pendingUncheck = null;
+    if (isNAUndo) {
+      // Undo N/A: set the NA field back to false
+      const trip = tripData[idx];
+      atPatch(COMP_TBL, trip.compId, { [fieldId]: false }).then(() => {
+        trip.cf[fieldId] = false;
+        refreshCard(idx);
+        updateSummary();
+        toast('N/A removed', 'info');
+      }).catch(e => toast('Failed: ' + e.message, 'err'));
+    } else {
+      doUncheck(idx, key, fieldId, atFieldId);
+    }
+  }
+}
+document.getElementById('adminPass').addEventListener('keydown', e => { if (e.key==='Enter') confirmUncheck(); });
+
+// ═══════════════════════════════════════
+// N/A TOGGLE
+// ═══════════════════════════════════════
+async function onNAClick(idx, key, naFieldId, currentNA) {
+  const trip = tripData[idx];
+  if (!trip?.compId) { toast('No completion record — try refreshing', 'err'); return; }
+
+  if (currentNA) {
+    // Undo N/A requires admin (same protection as unchecking a done task)
+    pendingUncheck = { idx, key, fieldId: naFieldId, atFieldId: null, isNAUndo: true };
+    document.getElementById('adminPass').value = '';
+    document.getElementById('adminErr').textContent = '';
+    document.getElementById('adminModal').classList.add('open');
+    setTimeout(() => document.getElementById('adminPass').focus(), 50);
+    return;
+  }
+
+  // Mark as N/A — anyone can do this
+  markSaving(idx, key, true);
+  try {
+    await atPatch(COMP_TBL, trip.compId, { [naFieldId]: true });
+    trip.cf[naFieldId] = true;
+    refreshCard(idx);
+    updateSummary();
+    toast('Marked as Not Applicable', 'info');
+    const sent = await maybeNotifyComplete(idx);
+    if (sent) toast('📨 Completion notice sent to DPEW!', 'ok');
+  } catch(e) {
+    toast('Failed: ' + e.message, 'err');
+  } finally { markSaving(idx, key, false); }
+}
+
+function skipName() {
+  document.getElementById('nameModal').classList.remove('open');
+  if (pendingCheck) {
+    const { idx, key, fieldId, atFieldId } = pendingCheck;
+    pendingCheck = null;
+    doCheck(idx, key, fieldId, atFieldId, 'Team');
+  }
+}
+
+function saveName() {
+  const name = document.getElementById('nameInput').value.trim() || 'Team';
+  localStorage.setItem('ms_name', name);
+  document.getElementById('nameModal').classList.remove('open');
+  if (pendingCheck) {
+    const { idx, key, fieldId, atFieldId } = pendingCheck;
+    pendingCheck = null;
+    doCheck(idx, key, fieldId, atFieldId, name);
+  }
+}
+document.getElementById('nameInput').addEventListener('keydown', e => { if (e.key==='Enter') saveName(); });
+
+// ═══════════════════════════════════════
+// REFRESH SINGLE CARD
+// ═══════════════════════════════════════
+function refreshCard(idx) {
+  const trip  = tripData[idx];
+  const tasks = taskList(trip);
+  const total = tasks.length;
+  const done  = tasks.filter(t=>isResolved(t)).length;
+  const pct   = total ? Math.round(done/total*100) : 0;
+  const allDone = done===total, anyDone = done>0;
+
+  const card = document.getElementById(`card-${idx}`);
+  if (!card) return;
+  card.className = `trip-card ${trip.mode==='out'?'card-out ':''}${allDone?'card-done':anyDone?'card-partial':'card-pending'}`;
+  card.querySelector('.card-status-dot').style.background =
+    allDone ? 'var(--success)' : anyDone ? 'var(--gold)' : 'var(--danger)';
+  card.querySelector('[style*="font-size:22px"]').textContent =
+    allDone ? '✅' : anyDone ? '🔄' : '⏳';
+
+  document.getElementById(`tasks-${idx}`).innerHTML = tasks.map(t => taskRowHTML(idx, t)).join('');
+
+  const bar = document.getElementById(`prog-${idx}`);
+  if (bar) { bar.style.width = pct+'%'; bar.className = `prog-bar ${pct===100?'pb-done':pct>0?'pb-partial':'pb-zero'}`; }
+  card.querySelector('.prog-meta').innerHTML = `<span>${done}/${total} tasks done</span><span>${pct}%</span>`;
+
+  updateCaptureButton(idx);
+}
+
+// ═══════════════════════════════════════
+// SUMMARY
+// ═══════════════════════════════════════
+function setSummary(t,d,p,pen) {
+  ['sTotal','sDone','sProg','sPend'].forEach((id,i) => document.getElementById(id).textContent=[t,d,p,pen][i]);
+}
+function updateSummary() {
+  let done=0,prog=0,pend=0;
+  tripData.forEach(trip => {
+    const tasks = taskList(trip);
+    const dc = tasks.filter(t=>isResolved(t)).length;
+    if (dc===tasks.length) done++;
+    else if (dc>0) prog++;
+    pend += tasks.filter(t=>!isResolved(t)).length;
+  });
+  setSummary(tripData.length, done, prog, pend);
+}
+
+// ═══════════════════════════════════════
+// DATE PICKER
+// ═══════════════════════════════════════
+function onDateChange() {
+  if (prevMode) exitPrevMode();
+  if (complMode) exitComplMode();
+  selectedDate = document.getElementById('datePicker').value || todayBKK();
+  document.getElementById('pillDate').textContent =
+    selectedDate === todayBKK() ? 'Today — ' + fmtDate(selectedDate) : fmtDate(selectedDate);
+  loadData();
+}
+
+// ═══════════════════════════════════════
+// PREVIOUS TRIPS (incomplete only)
+// ═══════════════════════════════════════
+function exitPrevMode() {
+  prevMode = false;
+  const btn = document.getElementById('prevBtn');
+  btn.textContent = '🗂️ Previous Trips';
+  btn.classList.remove('btn-orange'); btn.classList.add('btn-outline');
+}
+
+function togglePrevTrips() {
+  if (prevMode) {
+    exitPrevMode();
+    selectedDate = todayBKK();
+    document.getElementById('datePicker').value = selectedDate;
+    document.getElementById('pillDate').textContent = 'Today — ' + fmtDate(selectedDate);
+    loadData();
+    return;
+  }
+  if (complMode) exitComplMode();
+  prevMode = true;
+  const btn = document.getElementById('prevBtn');
+  btn.textContent = '📅 Back to Today';
+  btn.classList.remove('btn-outline'); btn.classList.add('btn-orange');
+  document.getElementById('pillDate').textContent = 'Previous Trips — Incomplete Tasks';
+  loadPrevTrips();
+}
+
+async function loadPrevTrips() {
+  document.getElementById('cardsGrid').innerHTML =
+    '<div class="state-box"><span class="state-icon spin">⏳</span><h3>Loading previous incomplete trips…</h3></div>';
+  setSummary('—','—','—','—');
+
+  try {
+    tripData = await fetchPendingPast();
+
+    if (!tripData.length) {
+      document.getElementById('cardsGrid').innerHTML =
+        '<div class="state-box"><span class="state-icon">🎉</span><h3>All previous trips are complete!</h3><p style="color:var(--gray-500);font-size:13px;margin-top:6px">No incomplete check-in or check-out tasks in the last 10 days.</p></div>';
+      setSummary(0,0,0,0);
+      return;
+    }
+    renderCards();
+    updateSummary();
+
+  } catch(e) {
+    document.getElementById('cardsGrid').innerHTML =
+      `<div class="state-box"><span class="state-icon">❌</span><h3>Error loading previous trips</h3>
+       <p style="color:var(--danger);font-size:13px;margin-top:6px">${e.message}</p>
+       <button class="btn btn-orange" style="margin-top:18px" onclick="loadPrevTrips()">Try Again</button></div>`;
+  }
+}
+
+// Fetch pending check-ins & check-outs from the last 7 days
+// (shared by the Previous Trips view and the today view's Overdue sections)
+async function fetchPendingPast() {
+    const past   = [];
+    const today  = todayBKK();
+    // 11 days back (not 10) so IS_AFTER's exclusive boundary still includes
+    // the exact 10-days-ago date — matches the (daysBack+1) cutoff in
+    // checkin_protocol_fixed.gs, so "last 10 days" means the same thing here.
+    const cutoff = new Date(Date.now() - 11*24*3600*1000).toLocaleDateString('en-CA', { timeZone: TZ });
+
+    // 1) Past check-ins with incomplete tasks (from completion records)
+    const inFormula = `AND(IS_BEFORE({Arrival Date}, DATETIME_PARSE('${today}')), IS_AFTER({Arrival Date}, DATETIME_PARSE('${cutoff}')))`;
+    // 2) Past check-outs (from Master Trips) — completion records matched below
+    const outFormula = `AND(IS_BEFORE({Checkout Date}, DATETIME_PARSE('${today}')), IS_AFTER({Checkout Date}, DATETIME_PARSE('${cutoff}')), FIND('Phuket', {City}), OR({Inquiry status}='Checked-In', {Inquiry status}='Trip completed'))`;
+
+    const [rawComps, rawOuts] = await Promise.all([
+      atGet(COMP_TBL, inFormula),
+      atGet(MASTER_TBL, outFormula, Object.values(MT))
+    ]);
+
+    // Completion records for past check-outs (chunked OR queries)
+    const outCompByMid = {};
+    for (let i = 0; i < rawOuts.length; i += 40) {
+      const chunk = rawOuts.slice(i, i + 40);
+      const comps = await atGet(COMP_TBL, `OR(${chunk.map(r => `{Master Trip Record ID}='${r.id}'`).join(',')})`);
+      comps.forEach(r => {
+        const mid = r.fields[CT.masterRec];
+        if (!mid) return;
+        const existing = outCompByMid[mid];
+        const hasData = r.fields[CT.property] || r.fields[CT.custName];
+        if (!existing || (hasData && !(existing.fields[CT.property] || existing.fields[CT.custName]))) {
+          outCompByMid[mid] = r;
+        }
+      });
+    }
+
+    // ── Pending check-ins ──
+    const inCands = [];
+    rawComps.forEach(r => {
+      const cf = r.fields;
+      const property = cf[CT.property] || '';
+      const custName = cf[CT.custName] || '';
+      if (!property && !custName) return;   // skip blank auto-generated records
+      if (cf[CT.custNoResp]) return;        // closed: customer did not respond
+
+      const trip = {
+        mode: 'in',
+        masterRecId: cf[CT.masterRec] || null,
+        tripId:   cf[CT.tripId] || '',
+        tripName: cf[CT.tripId] || '',
+        property, custName,
+        channel:  cf[CT.channel] || '',
+        contact:  '',
+        group:    (cf[CT.group] || '—') + '  •  📅 ' + fmtDate(cf[CT.arrival] || today),
+        needsElec:  !!cf[CT.needsElec],
+        needsWater: !!cf[CT.needsWater],
+        compId: r.id,
+        cf,
+        noRecord: false,
+        arrival:  cf[CT.arrival] || '',
+        checkout: cf[CT.checkoutDate] || '',
+      };
+
+      const tasks = taskList(trip);
+      if (!tasks.length || tasks.every(t => isResolved(t))) return;   // keep incomplete only
+      inCands.push(trip);
+    });
+
+    // Hide check-ins whose trip has since been cancelled in Master Trips
+    const candIds = [...new Set(inCands.map(t => t.masterRecId).filter(Boolean))];
+    const statusById = {};
+    for (let i = 0; i < candIds.length; i += 40) {
+      const chunk = candIds.slice(i, i + 40);
+      const recs = await atGet(MASTER_TBL, `OR(${chunk.map(id => `RECORD_ID()='${id}'`).join(',')})`, [MT.status]);
+      recs.forEach(r => {
+        const raw = r.fields[MT.status];
+        statusById[r.id] = typeof raw === 'object' ? (raw?.name || '') : (raw || '');
+      });
+    }
+    inCands.forEach(trip => {
+      const st = trip.masterRecId ? (statusById[trip.masterRecId] || '') : '';
+      if (st === 'Trip cancelled') return;   // trip was cancelled — do not show
+      past.push(trip);
+    });
+
+    // ── Pending check-outs ──
+    rawOuts.forEach(raw => {
+      const f = raw.fields;
+      const comp = outCompByMid[raw.id];
+      if (!comp) return;   // no check-in record was ever tracked — skip
+      if (comp.fields[CT.custNoResp]) return;   // closed: customer did not respond
+      const property = f[MT.property] || '';
+      const channel  = typeof f[MT.channel] === 'object' ? (f[MT.channel]?.name || '') : (f[MT.channel] || '');
+      const custName = extractName(f[MT.custName]);
+      const { needsElec, needsWater } = rules(property, channel);
+
+      const trip = {
+        mode: 'out',
+        masterRecId: raw.id,
+        tripId:   f[MT.tripId] || '',
+        tripName: f[MT.tripName] || '',
+        property, custName, channel,
+        contact:  extractName(f[MT.contact]),
+        group:    (f[MT.group] || '—') + '  •  🧳 ' + fmtDate(f[MT.checkout] || today),
+        needsElec, needsWater,
+        compId: comp.id,
+        cf:     comp.fields,
+        noRecord: false,
+        arrival:  f[MT.arrival]  || '',
+        checkout: f[MT.checkout] || '',
+      };
+
+      const tasks = taskList(trip);
+      if (!tasks.length || tasks.every(t => isResolved(t))) return;   // keep incomplete only
+      past.push(trip);
+    });
+
+    past.sort((a,b) => ((b.mode==='out'?b.checkout:b.arrival)||'').localeCompare((a.mode==='out'?a.checkout:a.arrival)||''));
+    return past;
+}
+
+// ═══════════════════════════════════════
+// COMPLETED TRIPS VIEW (last 10 days)
+// ═══════════════════════════════════════
+function isTripDone(t) {
+  const ts = taskList(t);
+  return ts.length > 0 && ts.every(x => isResolved(x));
+}
+
+function completionStamp(trip) {
+  const ts = taskList(trip).map(t => t.timeVal).filter(Boolean).sort();
+  if (!ts.length) return '';
+  const d = new Date(ts[ts.length - 1]);
+  return d.toLocaleDateString('en-GB', { day:'numeric', month:'short', timeZone: TZ })
+       + ', ' + d.toLocaleTimeString('en-US', { hour:'numeric', minute:'2-digit', hour12:true, timeZone: TZ });
+}
+
+function exitComplMode() {
+  complMode = false;
+  const btn = document.getElementById('complBtn');
+  btn.textContent = '✅ Completed Trips';
+  btn.classList.remove('btn-orange'); btn.classList.add('btn-outline');
+}
+
+function toggleCompleted() {
+  if (complMode) {
+    exitComplMode();
+    selectedDate = todayBKK();
+    document.getElementById('datePicker').value = selectedDate;
+    document.getElementById('pillDate').textContent = 'Today — ' + fmtDate(selectedDate);
+    loadData();
+    return;
+  }
+  if (prevMode) exitPrevMode();
+  complMode = true;
+  const btn = document.getElementById('complBtn');
+  btn.textContent = '📅 Back to Today';
+  btn.classList.remove('btn-outline'); btn.classList.add('btn-orange');
+  document.getElementById('pillDate').textContent = 'Completed Trips — last 10 days';
+  loadCompletedTrips();
+}
+
+async function loadCompletedTrips() {
+  document.getElementById('cardsGrid').innerHTML =
+    '<div class="state-box"><span class="state-icon spin">⏳</span><h3>Loading completed trips…</h3></div>';
+  setSummary('—','—','—','—');
+  try {
+    tripData = await fetchCompletedPast();
+    if (!tripData.length) {
+      document.getElementById('cardsGrid').innerHTML =
+        '<div class="state-box"><span class="state-icon">📭</span><h3>No completed trips in the last 10 days</h3></div>';
+      setSummary(0,0,0,0);
+      return;
+    }
+    renderCards();
+    updateSummary();
+  } catch(e) {
+    document.getElementById('cardsGrid').innerHTML =
+      `<div class="state-box"><span class="state-icon">❌</span><h3>Error loading completed trips</h3>
+       <p style="color:var(--danger);font-size:13px;margin-top:6px">${e.message}</p>
+       <button class="btn btn-orange" style="margin-top:18px" onclick="loadCompletedTrips()">Try Again</button></div>`;
+  }
+}
+
+// Fully-completed (or closed no-response) trips from the last 10 days
+async function fetchCompletedPast() {
+  const done   = [];
+  const today  = todayBKK();
+  const tomorrow = new Date(Date.now() + 24*3600*1000).toLocaleDateString('en-CA', { timeZone: TZ });
+  const cutoff = new Date(Date.now() - 11*24*3600*1000).toLocaleDateString('en-CA', { timeZone: TZ });
+
+  const inFormula  = `AND(IS_AFTER({Arrival Date}, DATETIME_PARSE('${cutoff}')), IS_BEFORE({Arrival Date}, DATETIME_PARSE('${tomorrow}')))`;
+  const outFormula = `AND(IS_AFTER({Checkout Date}, DATETIME_PARSE('${cutoff}')), IS_BEFORE({Checkout Date}, DATETIME_PARSE('${tomorrow}')), FIND('Phuket', {City}), OR({Inquiry status}='Checked-In', {Inquiry status}='Trip completed'))`;
+
+  const [rawComps, rawOuts] = await Promise.all([
+    atGet(COMP_TBL, inFormula),
+    atGet(MASTER_TBL, outFormula, Object.values(MT))
+  ]);
+
+  // Check-ins: from completion records
+  rawComps.forEach(r => {
+    const cf = r.fields;
+    const property = cf[CT.property] || '';
+    const custName = cf[CT.custName] || '';
+    if (!property && !custName) return;
+    const trip = {
+      mode: 'in',
+      masterRecId: cf[CT.masterRec] || null,
+      tripId: cf[CT.tripId] || '', tripName: cf[CT.tripId] || '',
+      property, custName,
+      channel: cf[CT.channel] || '', contact: '',
+      group: cf[CT.group] || '—',
+      needsElec: !!cf[CT.needsElec], needsWater: !!cf[CT.needsWater],
+      compId: r.id, cf, noRecord: false,
+      arrival: cf[CT.arrival] || '', checkout: cf[CT.checkoutDate] || '',
+    };
+    const closed = !!cf[CT.custNoResp];
+    if (!closed && !isTripDone(trip)) return;
+    const stamp = completionStamp(trip);
+    trip.group += closed
+      ? '  •  🚫 Closed — customer did not respond' + (cf[CT.custNoRespReason] ? `: ${cf[CT.custNoRespReason]}` : '')
+      : `  •  ✅ Completed: ${stamp || '—'}`;
+    done.push(trip);
+  });
+
+  // Check-outs: from Master + completion records
+  const byMid = {};
+  for (let i = 0; i < rawOuts.length; i += 40) {
+    const chunk = rawOuts.slice(i, i + 40);
+    const comps = await atGet(COMP_TBL, `OR(${chunk.map(r => `{Master Trip Record ID}='${r.id}'`).join(',')})`);
+    comps.forEach(r => {
+      const mid = r.fields[CT.masterRec];
+      if (!mid) return;
+      const existing = byMid[mid];
+      const hasData = r.fields[CT.property] || r.fields[CT.custName];
+      if (!existing || (hasData && !(existing.fields[CT.property] || existing.fields[CT.custName]))) byMid[mid] = r;
+    });
+  }
+  rawOuts.forEach(raw => {
+    const comp = byMid[raw.id];
+    if (!comp) return;
+    const f = raw.fields;
+    const property = f[MT.property] || '';
+    const channel  = typeof f[MT.channel] === 'object' ? (f[MT.channel]?.name || '') : (f[MT.channel] || '');
+    const { needsElec, needsWater } = rules(property, channel);
+    const trip = {
+      mode: 'out',
+      masterRecId: raw.id,
+      tripId: f[MT.tripId] || '', tripName: f[MT.tripName] || '',
+      property, channel,
+      custName: extractName(f[MT.custName]),
+      contact: extractName(f[MT.contact]),
+      group: f[MT.group] || '—',
+      needsElec, needsWater,
+      compId: comp.id, cf: comp.fields, noRecord: false,
+      arrival: f[MT.arrival] || '', checkout: f[MT.checkout] || '',
+    };
+    const closed = !!comp.fields[CT.custNoResp];
+    if (!closed && !isTripDone(trip)) return;
+    const stamp = completionStamp(trip);
+    trip.group += closed
+      ? '  •  🚫 Closed — customer did not respond' + (comp.fields[CT.custNoRespReason] ? `: ${comp.fields[CT.custNoRespReason]}` : '')
+      : `  •  ✅ Completed: ${stamp || '—'}`;
+    done.push(trip);
+  });
+
+  done.sort((a,b) => ((b.mode==='out'?b.checkout:b.arrival)||'').localeCompare((a.mode==='out'?a.checkout:a.arrival)||''));
+  return done;
+}
+
+// ═══════════════════════════════════════
+// TELEGRAM SENDS
+// ═══════════════════════════════════════
+async function sendBriefing() {
+  const btn = document.getElementById('briefBtn');
+  const btn2 = document.getElementById('tgBtn');
+  [btn,btn2].forEach(b=>{if(b){b.disabled=true;b.textContent='⏳ Sending…';}});
+
+  let ok;
+  if (WEBAPP_URL) {
+    // Preferred path: ask the Apps Script Web App to run the exact same
+    // sendMorningBriefing() the 8:30 AM trigger uses — one message-composer,
+    // no chance of the dashboard and the scheduled briefing disagreeing.
+    try {
+      const r = await fetch(`${WEBAPP_URL}?action=briefing&secret=${encodeURIComponent(WEBAPP_SECRET)}`);
+      const d = await r.json();
+      ok = !!d.ok;
+      addLog('DPEW Group', ok, 'Morning briefing (via Apps Script)');
+    } catch(e) {
+      ok = false;
+      addLog('DPEW Group', false, e.message);
+    }
+  } else {
+    ok = await sendBriefingLocal();
+  }
+  toast(ok ? '📨 Morning briefing sent to DPEW!' : '❌ Failed to send', ok?'ok':'err');
+  [btn,btn2].forEach(b=>{if(b){b.disabled=false;b.textContent=b===btn?'📨 Morning Briefing':'📨 Send to DPEW';}});
+}
+
+// Fallback only — used until WEBAPP_URL is configured. Mirrors
+// sendMorningBriefing() in checkin_protocol_fixed.gs section-for-section
+// (today's check-ins, then pending check-outs from the last 10 days) so it
+// doesn't drift from the scheduled message while this path is still active.
+async function sendBriefingLocal() {
+  const date = fmtDate(selectedDate);
+  const todaysIn = tripData.filter(t => t.mode !== 'out' && !t.overdue);
+  let msg = `🌅 <b>Good morning! Check-in Briefing — ${date}</b>\n\n`;
+
+  if (!todaysIn.length) {
+    msg += '🌴 No Phuket check-ins today. Have a great day!';
+  } else {
+    msg += `📋 <b>${todaysIn.length} check-in(s) today — Phuket:</b>\n`;
+    todaysIn.forEach(t => {
+      const tasks = ['☐ 💵 Deposit','☐ 🛂 Passport'];
+      if (t.needsElec)  tasks.push('☐ ⚡ Electric Meter');
+      if (t.needsWater) tasks.push('☐ 💧 Water Meter');
+      msg += `\n🏠 <b>${esc(t.property)}</b>  |  👤 ${esc(t.custName)}\n`;
+      msg += `📦 ${esc(t.channel)}`;
+      if (t.contact) msg += `  |  💬 ${esc(t.contact)}`;
+      msg += `\n📌 ${esc(t.group)}\n` + tasks.join('\n') + '\n';
+    });
+    msg += '\n📊 Tick off tasks in the dashboard as you complete them.';
+  }
+
+  try {
+    const past = await fetchPendingPast();
+    const pendingOuts = past.filter(t => t.mode === 'out');
+    if (pendingOuts.length) {
+      msg += `\n\n🧳 <b>Pending check-out tasks (last 10 days):</b>\n`;
+      pendingOuts.forEach(t => {
+        const pending = taskList(t).filter(x => !isResolved(x)).map(x => x.label);
+        msg += `\n🏠 <b>${esc(t.property)}</b>  |  👤 ${esc(t.custName)}  |  🧳 Checked out: ${fmtDate(t.checkout)}\n`;
+        msg += `Pending: ${pending.join('  ·  ')}\n`;
+        if (t.cf[CT.notes]) msg += `💬 Note: <i>${esc(t.cf[CT.notes])}</i>\n`;
+      });
+      msg += `\n👆 Use the 🗂️ Previous Trips button in the dashboard to resolve these.`;
+    }
+  } catch(e) { console.warn('Pending check-outs section failed to load:', e); }
+
+  return tgSend(DPEW_CHAT, msg);
+}
+
+// ═══════════════════════════════════════
+// LOG
+// ═══════════════════════════════════════
+function addLog(recipient, ok, preview) {
+  msgLog.unshift({ time: nowBKK(), recipient, ok, preview });
+  if (msgLog.length > 50) msgLog.pop();
+  document.getElementById('logBody').innerHTML = msgLog.map(l => `
+    <tr>
+      <td>${l.time}</td><td>${l.recipient}</td>
+      <td class="${l.ok?'log-ok':'log-fail'}">${l.ok?'Sent ✅':'Failed ❌'}</td>
+      <td>${esc(l.preview)}…</td>
+    </tr>`).join('');
+}
+
+function toggleLog() {
+  const p = document.getElementById('logPanel');
+  const open = p.classList.toggle('open');
+  document.querySelector('.log-toggle button').textContent = open ? '📝 Hide Message Log' : '📝 Show Message Log';
+}
+
+// ═══════════════════════════════════════
+// TOAST
+// ═══════════════════════════════════════
+function toast(msg, type='info') {
+  const area = document.getElementById('toasts');
+  const el = document.createElement('div');
+  el.className = `toast toast-${type==='ok'?'ok':type==='err'?'err':type==='warn'?'warn':'info'}`;
+  el.textContent = msg;
+  area.appendChild(el);
+  setTimeout(() => { el.style.opacity='0'; el.style.transition='opacity .4s'; setTimeout(()=>el.remove(),400); }, 3800);
+}
+
+// ═══════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════
+(function init() {
+  const today = todayBKK();
+  document.getElementById('datePicker').value = today;
+  document.getElementById('pillDate').textContent = 'Today — ' + fmtDate(today);
+  tickClock();
+  setInterval(tickClock, 30000);
+  loadData();
+  refreshTimer = setInterval(() => prevMode ? loadPrevTrips() : complMode ? loadCompletedTrips() : loadData(), 5 * 60 * 1000);
+})();
+</script>
+</body>
+</html>
