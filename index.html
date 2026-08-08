@@ -221,7 +221,7 @@ body{font-family:'Inter',sans-serif;background:var(--cream);color:var(--brown);m
       <strong id="hdrDate">—</strong>
       <span id="hdrTime">Bangkok Time</span>
     </div>
-    <button class="btn btn-ghost btn-sm" onclick="prevMode ? loadPrevTrips() : loadData()">🔄 Refresh</button>
+    <button class="btn btn-ghost btn-sm" onclick="prevMode ? loadPrevTrips() : complMode ? loadCompletedTrips() : loadData()">🔄 Refresh</button>
     <button class="btn btn-ghost btn-sm" id="briefBtn" onclick="sendBriefing()">📨 Morning Briefing</button>
   </div>
 </header>
@@ -233,6 +233,7 @@ body{font-family:'Inter',sans-serif;background:var(--cream);color:var(--brown);m
       <div class="date-pill">📅 <span id="pillDate">Today</span></div>
       <input type="date" id="datePicker" style="padding:7px 12px;border:1.5px solid var(--gray-200);border-radius:9px;font-size:13px;font-family:inherit;cursor:pointer;background:var(--white);" onchange="onDateChange()" />
       <button class="btn btn-outline btn-sm" id="prevBtn" onclick="togglePrevTrips()">🗂️ Previous Trips</button>
+      <button class="btn btn-outline btn-sm" id="complBtn" onclick="toggleCompleted()">✅ Completed Trips</button>
     </div>
     <button class="btn btn-teal btn-sm" onclick="sendBriefing()" id="tgBtn">📨 Send to DPEW</button>
   </div>
@@ -342,6 +343,7 @@ const CT = {
   doneBy:     'fldIzoPJxrHYpy8dP',
   group:      'fldOMNlOpUbTfoAwW',
   notes:      'fldoTudQrPX8Caz9d',
+  custNoResp: 'fldKaWYKMc4y7MC1C',
   // ── Meter readings & check-out protocol ──
   elecStart:      'fldXGKtMnumXtfZjr',
   waterStart:     'fldFVzTgJ6I9punJ8',
@@ -371,6 +373,7 @@ let selectedDate   = todayBKK();
 let refreshTimer   = null;
 let msgLog         = [];
 let prevMode       = false;
+let complMode      = false;
 
 // ═══════════════════════════════════════
 // DATE HELPERS
@@ -677,29 +680,38 @@ async function loadData() {
 // RENDER
 // ═══════════════════════════════════════
 function renderCards() {
-  const ins  = tripData.map((t,i)=>({t,i})).filter(x => x.t.mode !== 'out' && !x.t.overdue);
-  const outs = tripData.map((t,i)=>({t,i})).filter(x => x.t.mode === 'out' && !x.t.overdue);
-  const emptyIn  = prevMode ? 'No incomplete check-in protocols 🎉' : 'No Phuket check-ins for this date 🌴';
-  const emptyOut = prevMode ? 'No incomplete check-out protocols 🎉' : 'No Phuket check-outs for this date 🌴';
+  // Visibility: front page shows pending, open trips only; other modes show what they fetched
+  const visible = tripData.map((t,i)=>({t,i})).filter(x => {
+    if (prevMode || complMode) return true;
+    if (x.t.cf && x.t.cf[CT.custNoResp]) return false;        // closed: no response
+    if (isTripDone(x.t)) return false;                        // fully completed → Completed Trips view
+    return true;
+  });
+  const ins  = visible.filter(x => x.t.mode !== 'out' && !x.t.overdue);
+  const outs = visible.filter(x => x.t.mode === 'out' && !x.t.overdue);
+  const emptyIn  = complMode ? 'No completed check-ins in the last 10 days' : prevMode ? 'No incomplete check-in protocols 🎉' : 'No pending Phuket check-ins for this date 🎉';
+  const emptyOut = complMode ? 'No completed check-outs in the last 10 days' : prevMode ? 'No incomplete check-out protocols 🎉' : 'No pending Phuket check-outs for this date 🎉';
+  const inLabel  = complMode ? '✅ Completed Check-ins' : `🏠 Check-ins${prevMode?' — Pending':''}`;
+  const outLabel = complMode ? '✅ Completed Check-outs' : `🧳 Check-outs${prevMode?' — Pending':''}`;
   let html = '';
-  html += `<h2 class="section-head sh-in">🏠 Check-ins${prevMode?' — Pending':''} <span style="font-size:13px;font-weight:600;color:var(--gray-500)">(${ins.length})</span></h2>`;
+  html += `<h2 class="section-head sh-in">${inLabel} <span style="font-size:13px;font-weight:600;color:var(--gray-500)">(${ins.length})</span></h2>`;
   html += ins.length
     ? `<div class="cards-grid">${ins.map(x => cardHTML(x.t, x.i)).join('')}</div>`
     : `<div class="section-empty">${emptyIn}</div>`;
-  html += `<h2 class="section-head sh-out">🧳 Check-outs${prevMode?' — Pending':''} <span style="font-size:13px;font-weight:600;color:var(--gray-500)">(${outs.length})</span></h2>`;
+  html += `<h2 class="section-head sh-out">${outLabel} <span style="font-size:13px;font-weight:600;color:var(--gray-500)">(${outs.length})</span></h2>`;
   html += outs.length
     ? `<div class="cards-grid">${outs.map(x => cardHTML(x.t, x.i)).join('')}</div>`
     : `<div class="section-empty">${emptyOut}</div>`;
 
   // Overdue sections (today view only) — mirrors the Telegram reminder content
-  const odIns  = tripData.map((t,i)=>({t,i})).filter(x => x.t.overdue && x.t.mode !== 'out');
-  const odOuts = tripData.map((t,i)=>({t,i})).filter(x => x.t.overdue && x.t.mode === 'out');
+  const odIns  = visible.filter(x => x.t.overdue && x.t.mode !== 'out');
+  const odOuts = visible.filter(x => x.t.overdue && x.t.mode === 'out');
   if (odIns.length) {
-    html += `<h2 class="section-head sh-in">⏳ Overdue Check-ins — last 7 days <span style="font-size:13px;font-weight:600;color:var(--gray-500)">(${odIns.length})</span></h2>`;
+    html += `<h2 class="section-head sh-in">⏳ Overdue Check-ins — last 10 days <span style="font-size:13px;font-weight:600;color:var(--gray-500)">(${odIns.length})</span></h2>`;
     html += `<div class="cards-grid">${odIns.map(x => cardHTML(x.t, x.i)).join('')}</div>`;
   }
   if (odOuts.length) {
-    html += `<h2 class="section-head sh-out">⏳ Overdue Check-outs — last 7 days <span style="font-size:13px;font-weight:600;color:var(--gray-500)">(${odOuts.length})</span></h2>`;
+    html += `<h2 class="section-head sh-out">⏳ Overdue Check-outs — last 10 days <span style="font-size:13px;font-weight:600;color:var(--gray-500)">(${odOuts.length})</span></h2>`;
     html += `<div class="cards-grid">${odOuts.map(x => cardHTML(x.t, x.i)).join('')}</div>`;
   }
   document.getElementById('cardsGrid').innerHTML = html;
@@ -773,6 +785,7 @@ function cardHTML(trip, idx) {
 
   <div class="card-foot" id="foot-${idx}">
     <button class="btn btn-teal btn-sm" onclick="sendTripUpdate(${idx})">📨 Send Update</button>
+    ${isOut && !allDone && !complMode ? `<button class="btn btn-outline btn-sm" onclick="markNoResponse(${idx})">🚫 No response</button>` : ''}
     ${allDone ? '<span class="done-tag">✅ All tasks done!</span>' : ''}
   </div>
 </div>`;
@@ -1188,6 +1201,7 @@ function refreshCard(idx) {
 
   document.getElementById(`foot-${idx}`).innerHTML = `
     <button class="btn btn-teal btn-sm" onclick="sendTripUpdate(${idx})">📨 Send Update</button>
+    ${trip.mode==='out' && !allDone && !complMode ? `<button class="btn btn-outline btn-sm" onclick="markNoResponse(${idx})">🚫 No response</button>` : ''}
     ${allDone ? '<span class="done-tag">✅ All tasks done!</span>' : ''}`;
 }
 
@@ -1214,6 +1228,7 @@ function updateSummary() {
 // ═══════════════════════════════════════
 function onDateChange() {
   if (prevMode) exitPrevMode();
+  if (complMode) exitComplMode();
   selectedDate = document.getElementById('datePicker').value || todayBKK();
   document.getElementById('pillDate').textContent =
     selectedDate === todayBKK() ? 'Today — ' + fmtDate(selectedDate) : fmtDate(selectedDate);
@@ -1239,6 +1254,7 @@ function togglePrevTrips() {
     loadData();
     return;
   }
+  if (complMode) exitComplMode();
   prevMode = true;
   const btn = document.getElementById('prevBtn');
   btn.textContent = '📅 Back to Today';
@@ -1257,7 +1273,7 @@ async function loadPrevTrips() {
 
     if (!tripData.length) {
       document.getElementById('cardsGrid').innerHTML =
-        '<div class="state-box"><span class="state-icon">🎉</span><h3>All previous trips are complete!</h3><p style="color:var(--gray-500);font-size:13px;margin-top:6px">No incomplete check-in or check-out tasks in the last 7 days.</p></div>';
+        '<div class="state-box"><span class="state-icon">🎉</span><h3>All previous trips are complete!</h3><p style="color:var(--gray-500);font-size:13px;margin-top:6px">No incomplete check-in or check-out tasks in the last 10 days.</p></div>';
       setSummary(0,0,0,0);
       return;
     }
@@ -1277,7 +1293,7 @@ async function loadPrevTrips() {
 async function fetchPendingPast() {
     const past   = [];
     const today  = todayBKK();
-    const cutoff = new Date(Date.now() - 7*24*3600*1000).toLocaleDateString('en-CA', { timeZone: TZ });
+    const cutoff = new Date(Date.now() - 10*24*3600*1000).toLocaleDateString('en-CA', { timeZone: TZ });
 
     // 1) Past check-ins with incomplete tasks (from completion records)
     const inFormula = `AND(IS_BEFORE({Arrival Date}, DATETIME_PARSE('${today}')), IS_AFTER({Arrival Date}, DATETIME_PARSE('${cutoff}')))`;
@@ -1312,6 +1328,7 @@ async function fetchPendingPast() {
       const property = cf[CT.property] || '';
       const custName = cf[CT.custName] || '';
       if (!property && !custName) return;   // skip blank auto-generated records
+      if (cf[CT.custNoResp]) return;        // closed: customer did not respond
 
       const trip = {
         mode: 'in',
@@ -1358,6 +1375,7 @@ async function fetchPendingPast() {
       const f = raw.fields;
       const comp = outCompByMid[raw.id];
       if (!comp) return;   // no check-in record was ever tracked — skip
+      if (comp.fields[CT.custNoResp]) return;   // closed: customer did not respond
       const property = f[MT.property] || '';
       const channel  = typeof f[MT.channel] === 'object' ? (f[MT.channel]?.name || '') : (f[MT.channel] || '');
       const custName = extractName(f[MT.custName]);
@@ -1386,6 +1404,172 @@ async function fetchPendingPast() {
 
     past.sort((a,b) => ((b.mode==='out'?b.checkout:b.arrival)||'').localeCompare((a.mode==='out'?a.checkout:a.arrival)||''));
     return past;
+}
+
+// ═══════════════════════════════════════
+// COMPLETED TRIPS VIEW (last 10 days)
+// ═══════════════════════════════════════
+function isTripDone(t) {
+  const ts = taskList(t);
+  return ts.length > 0 && ts.every(x => isResolved(x));
+}
+
+function completionStamp(trip) {
+  const ts = taskList(trip).map(t => t.timeVal).filter(Boolean).sort();
+  if (!ts.length) return '';
+  const d = new Date(ts[ts.length - 1]);
+  return d.toLocaleDateString('en-GB', { day:'numeric', month:'short', timeZone: TZ })
+       + ', ' + d.toLocaleTimeString('en-US', { hour:'numeric', minute:'2-digit', hour12:true, timeZone: TZ });
+}
+
+function exitComplMode() {
+  complMode = false;
+  const btn = document.getElementById('complBtn');
+  btn.textContent = '✅ Completed Trips';
+  btn.classList.remove('btn-orange'); btn.classList.add('btn-outline');
+}
+
+function toggleCompleted() {
+  if (complMode) {
+    exitComplMode();
+    selectedDate = todayBKK();
+    document.getElementById('datePicker').value = selectedDate;
+    document.getElementById('pillDate').textContent = 'Today — ' + fmtDate(selectedDate);
+    loadData();
+    return;
+  }
+  if (prevMode) exitPrevMode();
+  complMode = true;
+  const btn = document.getElementById('complBtn');
+  btn.textContent = '📅 Back to Today';
+  btn.classList.remove('btn-outline'); btn.classList.add('btn-orange');
+  document.getElementById('pillDate').textContent = 'Completed Trips — last 10 days';
+  loadCompletedTrips();
+}
+
+async function loadCompletedTrips() {
+  document.getElementById('cardsGrid').innerHTML =
+    '<div class="state-box"><span class="state-icon spin">⏳</span><h3>Loading completed trips…</h3></div>';
+  setSummary('—','—','—','—');
+  try {
+    tripData = await fetchCompletedPast();
+    if (!tripData.length) {
+      document.getElementById('cardsGrid').innerHTML =
+        '<div class="state-box"><span class="state-icon">📭</span><h3>No completed trips in the last 10 days</h3></div>';
+      setSummary(0,0,0,0);
+      return;
+    }
+    renderCards();
+    updateSummary();
+  } catch(e) {
+    document.getElementById('cardsGrid').innerHTML =
+      `<div class="state-box"><span class="state-icon">❌</span><h3>Error loading completed trips</h3>
+       <p style="color:var(--danger);font-size:13px;margin-top:6px">${e.message}</p>
+       <button class="btn btn-orange" style="margin-top:18px" onclick="loadCompletedTrips()">Try Again</button></div>`;
+  }
+}
+
+// Fully-completed (or closed no-response) trips from the last 10 days
+async function fetchCompletedPast() {
+  const done   = [];
+  const today  = todayBKK();
+  const tomorrow = new Date(Date.now() + 24*3600*1000).toLocaleDateString('en-CA', { timeZone: TZ });
+  const cutoff = new Date(Date.now() - 10*24*3600*1000).toLocaleDateString('en-CA', { timeZone: TZ });
+
+  const inFormula  = `AND(IS_AFTER({Arrival Date}, DATETIME_PARSE('${cutoff}')), IS_BEFORE({Arrival Date}, DATETIME_PARSE('${tomorrow}')))`;
+  const outFormula = `AND(IS_AFTER({Checkout Date}, DATETIME_PARSE('${cutoff}')), IS_BEFORE({Checkout Date}, DATETIME_PARSE('${tomorrow}')), FIND('Phuket', {City}), OR({Inquiry status}='Checked-In', {Inquiry status}='Trip completed'))`;
+
+  const [rawComps, rawOuts] = await Promise.all([
+    atGet(COMP_TBL, inFormula),
+    atGet(MASTER_TBL, outFormula, Object.values(MT))
+  ]);
+
+  // Check-ins: from completion records
+  rawComps.forEach(r => {
+    const cf = r.fields;
+    const property = cf[CT.property] || '';
+    const custName = cf[CT.custName] || '';
+    if (!property && !custName) return;
+    const trip = {
+      mode: 'in',
+      masterRecId: cf[CT.masterRec] || null,
+      tripId: cf[CT.tripId] || '', tripName: cf[CT.tripId] || '',
+      property, custName,
+      channel: cf[CT.channel] || '', contact: '',
+      group: cf[CT.group] || '—',
+      needsElec: !!cf[CT.needsElec], needsWater: !!cf[CT.needsWater],
+      compId: r.id, cf, noRecord: false,
+      arrival: cf[CT.arrival] || '', checkout: cf[CT.checkoutDate] || '',
+    };
+    const closed = !!cf[CT.custNoResp];
+    if (!closed && !isTripDone(trip)) return;
+    const stamp = completionStamp(trip);
+    trip.group += closed
+      ? '  •  🚫 Closed — customer did not respond'
+      : `  •  ✅ Completed: ${stamp || '—'}`;
+    done.push(trip);
+  });
+
+  // Check-outs: from Master + completion records
+  const byMid = {};
+  for (let i = 0; i < rawOuts.length; i += 40) {
+    const chunk = rawOuts.slice(i, i + 40);
+    const comps = await atGet(COMP_TBL, `OR(${chunk.map(r => `{Master Trip Record ID}='${r.id}'`).join(',')})`);
+    comps.forEach(r => {
+      const mid = r.fields[CT.masterRec];
+      if (!mid) return;
+      const existing = byMid[mid];
+      const hasData = r.fields[CT.property] || r.fields[CT.custName];
+      if (!existing || (hasData && !(existing.fields[CT.property] || existing.fields[CT.custName]))) byMid[mid] = r;
+    });
+  }
+  rawOuts.forEach(raw => {
+    const comp = byMid[raw.id];
+    if (!comp) return;
+    const f = raw.fields;
+    const property = f[MT.property] || '';
+    const channel  = typeof f[MT.channel] === 'object' ? (f[MT.channel]?.name || '') : (f[MT.channel] || '');
+    const { needsElec, needsWater } = rules(property, channel);
+    const trip = {
+      mode: 'out',
+      masterRecId: raw.id,
+      tripId: f[MT.tripId] || '', tripName: f[MT.tripName] || '',
+      property, channel,
+      custName: extractName(f[MT.custName]),
+      contact: extractName(f[MT.contact]),
+      group: f[MT.group] || '—',
+      needsElec, needsWater,
+      compId: comp.id, cf: comp.fields, noRecord: false,
+      arrival: f[MT.arrival] || '', checkout: f[MT.checkout] || '',
+    };
+    const closed = !!comp.fields[CT.custNoResp];
+    if (!closed && !isTripDone(trip)) return;
+    const stamp = completionStamp(trip);
+    trip.group += closed
+      ? '  •  🚫 Closed — customer did not respond'
+      : `  •  ✅ Completed: ${stamp || '—'}`;
+    done.push(trip);
+  });
+
+  done.sort((a,b) => ((b.mode==='out'?b.checkout:b.arrival)||'').localeCompare((a.mode==='out'?a.checkout:a.arrival)||''));
+  return done;
+}
+
+// ── Mark a check-out as "customer did not respond" (closes the trip) ──
+async function markNoResponse(idx) {
+  const trip = tripData[idx];
+  if (!trip?.compId) { toast('No completion record — try refreshing', 'err'); return; }
+  const ok = confirm(`Mark "${trip.property} — ${trip.custName}" as CUSTOMER DID NOT RESPOND?
+
+The trip will be removed from the dashboard and reminders will stop. It will remain visible under ✅ Completed Trips.`);
+  if (!ok) return;
+  try {
+    await atPatch(COMP_TBL, trip.compId, { [CT.custNoResp]: true });
+    trip.cf[CT.custNoResp] = true;
+    renderCards();
+    updateSummary();
+    toast('🚫 Trip closed — customer did not respond', 'info');
+  } catch(e) { toast('Failed: ' + e.message, 'err'); }
 }
 
 // ═══════════════════════════════════════
@@ -1492,7 +1676,7 @@ function toast(msg, type='info') {
   tickClock();
   setInterval(tickClock, 30000);
   loadData();
-  refreshTimer = setInterval(() => prevMode ? loadPrevTrips() : loadData(), 5 * 60 * 1000);
+  refreshTimer = setInterval(() => prevMode ? loadPrevTrips() : complMode ? loadCompletedTrips() : loadData(), 5 * 60 * 1000);
 })();
 </script>
 </body>
