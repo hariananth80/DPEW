@@ -654,6 +654,14 @@ async function loadData() {
       }));
     }
 
+    // ── Overdue items (last 7 days) — shown on the today view so it matches Telegram reminders ──
+    if (isToday) {
+      try {
+        const past = await fetchPendingPast();
+        past.forEach(t => { t.overdue = true; tripData.push(t); });
+      } catch(e2) { console.warn('Overdue section failed to load:', e2); }
+    }
+
     renderCards();
     updateSummary();
 
@@ -669,8 +677,8 @@ async function loadData() {
 // RENDER
 // ═══════════════════════════════════════
 function renderCards() {
-  const ins  = tripData.map((t,i)=>({t,i})).filter(x => x.t.mode !== 'out');
-  const outs = tripData.map((t,i)=>({t,i})).filter(x => x.t.mode === 'out');
+  const ins  = tripData.map((t,i)=>({t,i})).filter(x => x.t.mode !== 'out' && !x.t.overdue);
+  const outs = tripData.map((t,i)=>({t,i})).filter(x => x.t.mode === 'out' && !x.t.overdue);
   const emptyIn  = prevMode ? 'No incomplete check-in protocols 🎉' : 'No Phuket check-ins for this date 🌴';
   const emptyOut = prevMode ? 'No incomplete check-out protocols 🎉' : 'No Phuket check-outs for this date 🌴';
   let html = '';
@@ -682,6 +690,18 @@ function renderCards() {
   html += outs.length
     ? `<div class="cards-grid">${outs.map(x => cardHTML(x.t, x.i)).join('')}</div>`
     : `<div class="section-empty">${emptyOut}</div>`;
+
+  // Overdue sections (today view only) — mirrors the Telegram reminder content
+  const odIns  = tripData.map((t,i)=>({t,i})).filter(x => x.t.overdue && x.t.mode !== 'out');
+  const odOuts = tripData.map((t,i)=>({t,i})).filter(x => x.t.overdue && x.t.mode === 'out');
+  if (odIns.length) {
+    html += `<h2 class="section-head sh-in">⏳ Overdue Check-ins — last 7 days <span style="font-size:13px;font-weight:600;color:var(--gray-500)">(${odIns.length})</span></h2>`;
+    html += `<div class="cards-grid">${odIns.map(x => cardHTML(x.t, x.i)).join('')}</div>`;
+  }
+  if (odOuts.length) {
+    html += `<h2 class="section-head sh-out">⏳ Overdue Check-outs — last 7 days <span style="font-size:13px;font-weight:600;color:var(--gray-500)">(${odOuts.length})</span></h2>`;
+    html += `<div class="cards-grid">${odOuts.map(x => cardHTML(x.t, x.i)).join('')}</div>`;
+  }
   document.getElementById('cardsGrid').innerHTML = html;
 }
 
@@ -1233,6 +1253,29 @@ async function loadPrevTrips() {
   setSummary('—','—','—','—');
 
   try {
+    tripData = await fetchPendingPast();
+
+    if (!tripData.length) {
+      document.getElementById('cardsGrid').innerHTML =
+        '<div class="state-box"><span class="state-icon">🎉</span><h3>All previous trips are complete!</h3><p style="color:var(--gray-500);font-size:13px;margin-top:6px">No incomplete check-in or check-out tasks in the last 7 days.</p></div>';
+      setSummary(0,0,0,0);
+      return;
+    }
+    renderCards();
+    updateSummary();
+
+  } catch(e) {
+    document.getElementById('cardsGrid').innerHTML =
+      `<div class="state-box"><span class="state-icon">❌</span><h3>Error loading previous trips</h3>
+       <p style="color:var(--danger);font-size:13px;margin-top:6px">${e.message}</p>
+       <button class="btn btn-orange" style="margin-top:18px" onclick="loadPrevTrips()">Try Again</button></div>`;
+  }
+}
+
+// Fetch pending check-ins & check-outs from the last 7 days
+// (shared by the Previous Trips view and the today view's Overdue sections)
+async function fetchPendingPast() {
+    const past   = [];
     const today  = todayBKK();
     const cutoff = new Date(Date.now() - 7*24*3600*1000).toLocaleDateString('en-CA', { timeZone: TZ });
 
@@ -1261,8 +1304,6 @@ async function loadPrevTrips() {
         }
       });
     }
-
-    tripData = [];
 
     // ── Pending check-ins ──
     const inCands = [];
@@ -1309,7 +1350,7 @@ async function loadPrevTrips() {
     inCands.forEach(trip => {
       const st = trip.masterRecId ? (statusById[trip.masterRecId] || '') : '';
       if (st === 'Trip cancelled') return;   // trip was cancelled — do not show
-      tripData.push(trip);
+      past.push(trip);
     });
 
     // ── Pending check-outs ──
@@ -1340,26 +1381,11 @@ async function loadPrevTrips() {
 
       const tasks = taskList(trip);
       if (!tasks.length || tasks.every(t => isResolved(t))) return;   // keep incomplete only
-      tripData.push(trip);
+      past.push(trip);
     });
 
-    tripData.sort((a,b) => ((b.mode==='out'?b.checkout:b.arrival)||'').localeCompare((a.mode==='out'?a.checkout:a.arrival)||''));
-
-    if (!tripData.length) {
-      document.getElementById('cardsGrid').innerHTML =
-        '<div class="state-box"><span class="state-icon">🎉</span><h3>All previous trips are complete!</h3><p style="color:var(--gray-500);font-size:13px;margin-top:6px">No incomplete check-in or check-out tasks in the last 7 days.</p></div>';
-      setSummary(0,0,0,0);
-      return;
-    }
-    renderCards();
-    updateSummary();
-
-  } catch(e) {
-    document.getElementById('cardsGrid').innerHTML =
-      `<div class="state-box"><span class="state-icon">❌</span><h3>Error loading previous trips</h3>
-       <p style="color:var(--danger);font-size:13px;margin-top:6px">${e.message}</p>
-       <button class="btn btn-orange" style="margin-top:18px" onclick="loadPrevTrips()">Try Again</button></div>`;
-  }
+    past.sort((a,b) => ((b.mode==='out'?b.checkout:b.arrival)||'').localeCompare((a.mode==='out'?a.checkout:a.arrival)||''));
+    return past;
 }
 
 // ═══════════════════════════════════════
