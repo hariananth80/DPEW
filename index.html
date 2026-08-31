@@ -388,6 +388,13 @@ const CT = {
 const RATE_ELEC  = 6;    // THB per unit
 const RATE_WATER = 50;   // THB per unit
 
+// Per-property electric rate overrides — LUX-9 is billed at a different rate
+// than the standard villas. Add more entries here if other properties need one.
+const ELEC_RATE_OVERRIDES = { 'LUX-9': 8 };
+function electricRateFor(property) {
+  return ELEC_RATE_OVERRIDES[property] ?? RATE_ELEC;
+}
+
 // ═══════════════════════════════════════
 // STATE
 // ═══════════════════════════════════════
@@ -1059,7 +1066,7 @@ function taskList(trip) {
     return [
       { key:'depositRet', label:'💵 Deposit Returned',    fieldId:CT.depositRet,      atFieldId:CT.depositRetAt,  done:!!cf[CT.depositRet],      timeVal:cf[CT.depositRetAt],  show:true,            hasNA:true, isNA:!!cf[CT.depositWaived], naFieldId:CT.depositWaived, naLabel:'No Deposit' },
       { key:'elecCharge', label:'⚡ Electricity Charges', fieldId:CT.elecChargeDone,  atFieldId:CT.elecChargeAt,  done:!!cf[CT.elecChargeDone],  timeVal:cf[CT.elecChargeAt],  show:trip.needsElec,  hasNA:true, isNA:!!cf[CT.electricNA],    naFieldId:CT.electricNA,    naLabel:'N/A',
-        calc:{ startField:CT.elecStart, endField:CT.elecEnd, chargeField:CT.elecCharges, rate:RATE_ELEC, word:'electricity' } },
+        calc:{ startField:CT.elecStart, endField:CT.elecEnd, chargeField:CT.elecCharges, rate:electricRateFor(trip.property), word:'electricity' } },
       { key:'waterCharge', label:'💧 Water Charges',      fieldId:CT.waterChargeDone, atFieldId:CT.waterChargeAt, done:!!cf[CT.waterChargeDone], timeVal:cf[CT.waterChargeAt], show:trip.needsWater, hasNA:true, isNA:!!cf[CT.waterNA],       naFieldId:CT.waterNA,       naLabel:'N/A',
         calc:{ startField:CT.waterStart, endField:CT.waterEnd, chargeField:CT.waterCharges, rate:RATE_WATER, word:'water' } },
     ].filter(t => t.show);
